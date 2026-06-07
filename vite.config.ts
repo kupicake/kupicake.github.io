@@ -5,7 +5,7 @@ import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
   return {
-    base: './',
+    base: isGithubActions ? '/kupicake.github.io/' : '/',
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
