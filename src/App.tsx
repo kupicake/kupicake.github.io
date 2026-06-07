@@ -392,20 +392,13 @@ export default function App() {
                 {/* Background Image */}
                 <div className="absolute inset-0 z-0 pointer-events-none">
                   <video 
-                    width="100%" 
-                    height="auto" 
+                    src="https://drive.google.com/uc?export=download&id=1IS9mfxhpCFZBbnWNimJXwH5xtIrGViOV" 
+                    className="w-full h-full object-cover object-center absolute inset-0 grayscale opacity-25 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700 pointer-events-none" 
                     autoPlay 
-                    muted 
                     loop 
+                    muted 
                     playsInline 
-                    controls
-                    className="w-full h-full object-cover object-center absolute inset-0 grayscale opacity-25 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700 pointer-events-auto"
-                    onClick={(e) => {
-                       e.currentTarget.paused ? e.currentTarget.play() : e.currentTarget.pause();
-                    }}
-                  >
-                    <source src="https://drive.google.com/uc?export=download&id=1IS9mfxhpCFZBbnWNimJXwH5xtIrGViOV" type="video/webm" />
-                  </video>
+                  />
                   <div className="absolute inset-0 bg-gradient-to-b from-black via-black/60 to-transparent pointer-events-none"></div>
                 </div>
 
