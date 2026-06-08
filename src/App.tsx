@@ -14,17 +14,62 @@ export default function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrollY, setScrollY] = useState(0);
   const [windowHeight, setWindowHeight] = useState(0);
+  const [activeService, setActiveService] = useState(0);
   const lenisRef = useRef<Lenis | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const serviceVideoRef = useRef<HTMLVideoElement | null>(null);
+  const serviceTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
+    serviceTimerRef.current = window.setInterval(() => {
+      setActiveService(p => (p + 1) % 3);
+    }, 5000);
+    return () => {
+      if (serviceTimerRef.current) clearInterval(serviceTimerRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (activeService === 2 && serviceVideoRef.current) {
+      serviceVideoRef.current.play().catch(() => {});
+    } else if (serviceVideoRef.current) {
+      serviceVideoRef.current.pause();
+    }
+  }, [activeService]);
+
+  const handleServiceEnter = (index: number) => {
+    setActiveService(index);
+    if (serviceTimerRef.current) clearInterval(serviceTimerRef.current);
+  };
+
+  const handleServiceLeave = () => {
+    if (serviceTimerRef.current) clearInterval(serviceTimerRef.current);
+    serviceTimerRef.current = window.setInterval(() => {
+      setActiveService(p => (p + 1) % 3);
+    }, 5000);
+  };
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.muted = !isSoundOn;
+      if (isSoundOn) {
+        videoRef.current.play().catch(() => {
+          setIsSoundOn(false);
+          if (videoRef.current) {
+             videoRef.current.muted = true;
+             videoRef.current.play().catch(() => {});
+          }
+        });
+      }
+    }
     if (audioRef.current) {
       if (isSoundOn) {
         audioRef.current.play().catch(() => {
           setIsSoundOn(false);
         });
       } else {
-        audioRef.current.pause();
+         audioRef.current.pause();
       }
     }
   }, [isSoundOn]);
@@ -131,7 +176,7 @@ export default function App() {
     <main className="bg-[#1c1c1c] flex flex-col gap-[1px] w-full min-h-screen font-sans">
       <audio
         ref={audioRef}
-        src="https://raw.githubusercontent.com/kupicake/database/main/main%20illus_hero%20section.webm"
+        src="https://raw.githubusercontent.com/kupicake/database/main/Scott%20Buckley%20-%20Growing%20Up.mp3"
         loop
       />
       
@@ -242,10 +287,11 @@ export default function App() {
         {/* Video Background */}
         <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
           <video 
+            ref={videoRef}
             src="https://raw.githubusercontent.com/kupicake/database/main/main%20illus_hero%20section.webm" 
             autoPlay 
             loop 
-            muted 
+            muted={!isSoundOn} 
             playsInline 
             className="w-full h-full object-cover z-0 opacity-100 scale-105" 
             style={{ transform: `translateY(${scrollY * 0.4}px)` }}
@@ -403,91 +449,79 @@ export default function App() {
            </h2>
            
            <div className="grid grid-cols-1 lg:grid-cols-3 gap-[1px] bg-[#1c1c1c] border-t border-[#1c1c1c] w-full flex-grow">
-             {/* Box 1 */}
-             <div className="relative bg-black pt-16 pb-16 lg:pt-32 lg:pb-24 px-8 md:px-16 lg:px-20 flex flex-col gap-10 md:gap-16 group transition-all duration-500 hover:bg-[#050505] min-h-[600px] lg:min-h-[800px] overflow-hidden">
-                {/* Background Image */}
-                <div className="absolute inset-0 z-0 pointer-events-none">
-                  <img src="https://raw.githubusercontent.com/kupicake/database/main/raw%20concept.webp" referrerPolicy="no-referrer" className="w-full h-full object-cover object-center grayscale opacity-25 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700" alt="Raw Concept" />
-                  <div className="absolute inset-0 bg-gradient-to-b from-black via-black/60 to-transparent"></div>
-                </div>
-                
-                <div className="w-full relative z-10">
-                  <div className="text-[#5A5957] font-mono text-sm md:text-base lg:text-lg mb-4">Branding &amp; Visual Identity</div>
-                  <div className="h-[1px] w-full bg-[#1c1c1c] group-hover:bg-[#F05C3B] transition-colors duration-500"></div>
-                </div>
-                <div className="flex flex-col gap-4 -mt-2 md:-mt-4 relative z-10">
-                  <div className="text-[#E8E6E3] font-normal text-3xl md:text-5xl xl:text-[52px] leading-[1.1] tracking-tight group-hover:text-[#F05C3B] transition-colors duration-500">Raw Concept</div>
-                </div>
-                <div className="text-[#8C8A87] text-base md:text-lg lg:text-xl font-light leading-[1.6] relative z-10">
-                  Transforming abstract ideas into structured blueprints, from clean vector logo design to initial layout concepts.
-                </div>
-                <div className="mt-auto flex justify-start items-end pt-12 relative z-10">
-                  <div className="text-white/50 font-normal text-3xl md:text-4xl xl:text-5xl leading-[1.05] md:leading-[1.1] tracking-tight group-hover:text-[#F05C3B] transition-colors duration-500 select-none">01</div>
-                </div>
-             </div>
+             {[
+               {
+                 type: 'img',
+                 src: 'https://raw.githubusercontent.com/kupicake/database/main/raw%20concept.webp',
+                 category: 'Branding & Visual Identity',
+                 title: 'Raw Concept',
+                 desc: 'Transforming abstract ideas into structured blueprints, from clean vector logo design to initial layout concepts.',
+                 num: '01'
+               },
+               {
+                 type: 'img',
+                 src: 'https://raw.githubusercontent.com/kupicake/database/main/full%20illustration.webp',
+                 category: 'Narrative & Character Design',
+                 title: 'Full Illustration',
+                 desc: 'Building rich, immersive worlds, detailed character designs, and full publication layouts.',
+                 num: '02'
+               },
+               {
+                 type: 'video',
+                 src: 'https://raw.githubusercontent.com/kupicake/database/main/3.animasi_fin.webm',
+                 category: 'Motion Graphics & 2D Movement',
+                 title: 'Lively Animation',
+                 desc: 'Breathing movement into static artwork through traditional frame-by-frame loops and dynamic motion sequences.',
+                 num: '03',
+                 diamond: true
+               }
+             ].map((service, index) => (
+                <div 
+                  key={index}
+                  className={`relative pt-16 pb-16 lg:pt-32 lg:pb-24 px-8 md:px-16 lg:px-20 flex flex-col gap-10 md:gap-16 transition-all duration-500 min-h-[600px] lg:min-h-[800px] overflow-hidden ${activeService === index ? 'bg-[#050505]' : 'bg-black'}`}
+                  onMouseEnter={() => handleServiceEnter(index)}
+                  onTouchStart={() => handleServiceEnter(index)}
+                  onMouseLeave={handleServiceLeave}
+                  onClick={() => handleServiceEnter(index)}
+                >
+                   {/* Background Media */}
+                   <div className="absolute inset-0 z-0 pointer-events-none">
+                     {service.type === 'img' ? (
+                       <img src={service.src} referrerPolicy="no-referrer" className={`w-full h-full object-cover object-center transition-all duration-700 ${activeService === index ? 'grayscale-0 opacity-100' : 'grayscale opacity-25'}`} alt={service.title} />
+                     ) : (
+                       <video 
+                         ref={serviceVideoRef}
+                         src={service.src} 
+                         className={`w-full h-full object-cover object-center absolute inset-0 transition-all duration-700 pointer-events-none ${activeService === index ? 'grayscale-0 opacity-100' : 'grayscale opacity-25'}`} 
+                         loop 
+                         muted 
+                         playsInline 
+                       />
+                     )}
+                     <div className="absolute inset-0 bg-gradient-to-b from-black via-black/60 to-transparent pointer-events-none"></div>
+                   </div>
 
-             {/* Box 2 */}
-             <div className="relative bg-black pt-16 pb-16 lg:pt-32 lg:pb-24 px-8 md:px-16 lg:px-20 flex flex-col gap-10 md:gap-16 group transition-all duration-500 hover:bg-[#050505] min-h-[600px] lg:min-h-[800px] overflow-hidden">
-                {/* Background Image */}
-                <div className="absolute inset-0 z-0 pointer-events-none">
-                  <img src="https://raw.githubusercontent.com/kupicake/database/main/full%20illustration.webp" referrerPolicy="no-referrer" className="w-full h-full object-cover object-center grayscale opacity-25 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700" alt="Full Illustration" />
-                  <div className="absolute inset-0 bg-gradient-to-b from-black via-black/60 to-transparent"></div>
+                   <div className="w-full relative z-10">
+                     <div className="text-[#5A5957] font-mono text-sm md:text-base lg:text-lg mb-4">{service.category}</div>
+                     <div className={`h-[1px] w-full transition-colors duration-500 ${activeService === index ? 'bg-[#F05C3B]' : 'bg-[#1c1c1c]'}`}></div>
+                   </div>
+                   
+                   <div className="flex flex-col gap-4 -mt-2 md:-mt-4 relative z-10">
+                     {service.diamond && (
+                       <div className={`absolute -left-6 md:-left-8 top-1 md:top-2 text-[#E8E6E3] transition-opacity duration-500 text-2xl md:text-4xl ${activeService === index ? 'opacity-100' : 'opacity-0'}`}>✦</div>
+                     )}
+                     <div className={`font-normal text-3xl md:text-5xl xl:text-[52px] leading-[1.1] tracking-tight transition-colors duration-500 ${activeService === index ? 'text-[#F05C3B]' : 'text-[#E8E6E3]'}`}>{service.title}</div>
+                   </div>
+                   
+                   <div className="text-[#8C8A87] text-base md:text-lg lg:text-xl font-light leading-[1.6] relative z-10">
+                     {service.desc}
+                   </div>
+                   
+                   <div className="mt-auto flex justify-start items-end pt-12 relative z-10">
+                     <div className={`font-normal text-3xl md:text-4xl xl:text-5xl leading-[1.05] md:leading-[1.1] tracking-tight transition-colors duration-500 select-none ${activeService === index ? 'text-[#F05C3B]' : 'text-white/50'}`}>{service.num}</div>
+                   </div>
                 </div>
-
-                <div className="w-full relative z-10">
-                  <div className="text-[#5A5957] font-mono text-sm md:text-base lg:text-lg mb-4">Narrative &amp; Character Design</div>
-                  <div className="h-[1px] w-full bg-[#1c1c1c] group-hover:bg-[#F05C3B] transition-colors duration-500"></div>
-                </div>
-                <div className="flex flex-col gap-4 -mt-2 md:-mt-4 relative z-10">
-                  <div className="text-[#E8E6E3] font-normal text-3xl md:text-5xl xl:text-[52px] leading-[1.1] tracking-tight group-hover:text-[#F05C3B] transition-colors duration-500">Full Illustration</div>
-                </div>
-                <div className="text-[#8C8A87] text-base md:text-lg lg:text-xl font-light leading-[1.6] relative z-10">
-                  Building rich, immersive worlds, detailed character designs, and full publication layouts.
-                </div>
-                <div className="mt-auto flex justify-start items-end pt-12 relative z-10">
-                  <div className="text-white/50 font-normal text-3xl md:text-4xl xl:text-5xl leading-[1.05] md:leading-[1.1] tracking-tight group-hover:text-[#F05C3B] transition-colors duration-500 select-none">02</div>
-                </div>
-             </div>
-
-             {/* Box 3 */}
-             <div 
-               className="relative bg-black pt-16 pb-16 lg:pt-32 lg:pb-24 px-8 md:px-16 lg:px-20 flex flex-col gap-10 md:gap-16 group transition-all duration-500 hover:bg-[#050505] min-h-[600px] lg:min-h-[800px] overflow-hidden"
-               onMouseEnter={(e) => {
-                 const video = e.currentTarget.querySelector('video');
-                 if (video) video.play();
-               }}
-               onMouseLeave={(e) => {
-                 const video = e.currentTarget.querySelector('video');
-                 if (video) video.pause();
-               }}
-             >
-                {/* Background Image */}
-                <div className="absolute inset-0 z-0 pointer-events-none">
-                  <video 
-                    src="https://raw.githubusercontent.com/kupicake/database/main/3.animasi_fin.webm" 
-                    className="w-full h-full object-cover object-center absolute inset-0 grayscale opacity-25 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700 pointer-events-none" 
-                    loop 
-                    muted 
-                    playsInline 
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-b from-black via-black/60 to-transparent pointer-events-none"></div>
-                </div>
-
-                <div className="w-full relative z-10">
-                  <div className="text-[#5A5957] font-mono text-sm md:text-base lg:text-lg mb-4">Motion Graphics &amp; 2D Movement</div>
-                  <div className="h-[1px] w-full bg-[#1c1c1c] group-hover:bg-[#F05C3B] transition-colors duration-500"></div>
-                </div>
-                <div className="flex flex-col gap-4 -mt-2 md:-mt-4 relative z-10">
-                  <div className="absolute -left-6 md:-left-8 top-1 md:top-2 text-[#E8E6E3] opacity-0 group-hover:opacity-100 transition-opacity duration-500 text-2xl md:text-4xl">✦</div>
-                  <div className="text-[#E8E6E3] font-normal text-3xl md:text-5xl xl:text-[52px] leading-[1.1] tracking-tight group-hover:text-[#F05C3B] transition-colors duration-500">Lively Animation</div>
-                </div>
-                <div className="text-[#8C8A87] text-base md:text-lg lg:text-xl font-light leading-[1.6] relative z-10">
-                  Breathing movement into static artwork through traditional frame-by-frame loops and dynamic motion sequences.
-                </div>
-                <div className="mt-auto flex justify-start items-end pt-12 relative z-10">
-                  <div className="text-white/50 font-normal text-3xl md:text-4xl xl:text-5xl leading-[1.05] md:leading-[1.1] tracking-tight group-hover:text-[#F05C3B] transition-colors duration-500 select-none">03</div>
-                </div>
-             </div>
+             ))}
            </div>
         </div>
 

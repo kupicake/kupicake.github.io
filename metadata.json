@@ -1,6 +1,6 @@
 {
-  "name": "Blank Grid Hero",
-  "description": "A minimalist, dark theme grid-style portfolio hero section.",
+  "name": "Kupi Cake's Portfolio",
+  "description": "A minimalist, dark theme grid-style portfolio.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
