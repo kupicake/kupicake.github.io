@@ -11,6 +11,9 @@ import {
 
 export default function App() {
   const [isSoundOn, setIsSoundOn] = useState(true);
+  const [hasInteracted, setHasInteracted] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [isFullyLoaded, setIsFullyLoaded] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrollY, setScrollY] = useState(0);
   const [windowHeight, setWindowHeight] = useState(0);
@@ -20,6 +23,22 @@ export default function App() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const serviceVideoRef = useRef<HTMLVideoElement | null>(null);
   const serviceTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    let currentProgress = 0;
+    const interval = setInterval(() => {
+      currentProgress += Math.floor(Math.random() * 15) + 5;
+      if (currentProgress >= 100) {
+        currentProgress = 100;
+        setLoadingProgress(currentProgress);
+        clearInterval(interval);
+      } else {
+        setLoadingProgress(currentProgress);
+      }
+    }, 40);
+
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     serviceTimerRef.current = window.setInterval(() => {
@@ -50,12 +69,34 @@ export default function App() {
     }, 5000);
   };
 
+  
+
+  useEffect(() => {
+    const handleInteraction = () => {
+      setHasInteracted(true);
+      if (isSoundOn) {
+        if (videoRef.current && videoRef.current.muted) {
+          videoRef.current.muted = false;
+          videoRef.current.play().catch(() => {});
+        }
+        if (audioRef.current && audioRef.current.paused) {
+          audioRef.current.play().catch(() => {});
+        }
+      }
+    };
+    window.addEventListener('pointerdown', handleInteraction);
+    window.addEventListener('keydown', handleInteraction);
+    return () => {
+      window.removeEventListener('pointerdown', handleInteraction);
+      window.removeEventListener('keydown', handleInteraction);
+    };
+  }, [isSoundOn]);
+
   useEffect(() => {
     if (videoRef.current) {
       videoRef.current.muted = !isSoundOn;
       if (isSoundOn) {
         videoRef.current.play().catch(() => {
-          setIsSoundOn(false);
           if (videoRef.current) {
              videoRef.current.muted = true;
              videoRef.current.play().catch(() => {});
@@ -64,15 +105,13 @@ export default function App() {
       }
     }
     if (audioRef.current) {
-      if (isSoundOn) {
-        audioRef.current.play().catch(() => {
-          setIsSoundOn(false);
-        });
-      } else {
+      if (isSoundOn && hasInteracted) {
+        audioRef.current.play().catch(() => {});
+      } else if (!isSoundOn) {
          audioRef.current.pause();
       }
     }
-  }, [isSoundOn]);
+  }, [isSoundOn, hasInteracted]);
 
   useEffect(() => {
     // Lenis Smooth Scroll Setup
@@ -174,6 +213,30 @@ export default function App() {
 
   return (
     <main className="bg-[#1c1c1c] flex flex-col gap-[1px] w-full min-h-screen font-sans">
+      {/* LOADING SCREEN */}
+      {!isFullyLoaded && (
+        <div 
+          onClick={() => {
+            if (loadingProgress === 100) {
+              setIsFullyLoaded(true);
+              setHasInteracted(true);
+              if (isSoundOn && audioRef.current) {
+                audioRef.current.play().catch(() => {});
+              }
+            }
+          }}
+          className={`fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black text-[#E8E6E3] transition-opacity duration-1000 ease-out ${loadingProgress === 100 ? 'cursor-pointer' : ''}`}
+        >
+          <div className="font-mono text-4xl md:text-6xl font-light tracking-widest flex items-baseline relative">
+            <span className="w-24 md:w-32 text-right">{loadingProgress}</span>
+            <span className="text-[#F05C3B] text-2xl md:text-3xl">%</span>
+          </div>
+          <div className={`absolute bottom-20 mt-12 text-[#8C8A87] font-mono text-xs tracking-widest uppercase transition-opacity duration-1000 ease-in-out ${loadingProgress === 100 ? 'opacity-100 animate-pulse' : 'opacity-0 pointer-events-none'}`}>
+            Click to Enter
+          </div>
+        </div>
+      )}
+
       <audio
         ref={audioRef}
         src="https://raw.githubusercontent.com/kupicake/database/main/Scott%20Buckley%20-%20Growing%20Up.mp3"
@@ -238,8 +301,15 @@ export default function App() {
         </div>
 
         {/* Bottom Right - Sound */}
-        <div className="absolute bottom-0 right-0 w-[75px] lg:w-[115px] h-[75px] lg:h-[115px] flex items-center justify-center pointer-events-auto bg-transparent"
-             style={{ '--sp': `${Math.min(100, Math.max(0, (scrollY / (typeof window !== 'undefined' ? (window.innerWidth >= 1024 ? 115 : 75) : 115)) * 100))}%` } as React.CSSProperties}
+        <div className="absolute bottom-[15%] landscape:bottom-0 lg:bottom-0 right-0 w-[75px] lg:w-[115px] h-[75px] lg:h-[115px] flex items-center justify-center pointer-events-auto bg-transparent group/sound"
+             style={{ '--sp': `${typeof window !== 'undefined' ? (() => {
+                 const isDesktop = window.innerWidth >= 1024;
+                 const isPortrait = window.innerHeight > window.innerWidth;
+                 const baseOffset = (isDesktop || !isPortrait) ? 0 : window.innerHeight * 0.15;
+                 const buttonSize = isDesktop ? 115 : 75;
+                 const effectiveScroll = scrollY - baseOffset;
+                 return Math.min(100, Math.max(0, (effectiveScroll / buttonSize) * 100));
+             })() : 0}%` } as React.CSSProperties}
         >
           <div 
               onClick={() => setIsSoundOn(!isSoundOn)}
@@ -268,7 +338,7 @@ export default function App() {
           {/* Song Info */}
           <div 
               className={`absolute right-[calc(50%+15px)] lg:right-[calc(50%+20px)] top-1/2 -translate-y-1/2 whitespace-nowrap text-[8px] lg:text-[9px] font-medium tracking-[0.15em] lg:tracking-[0.2em] uppercase text-[#8C8A87] transition-all duration-500 ease-out flex items-center gap-3 bg-black px-3 py-1.5 lg:px-4 lg:py-2 rounded-full ${
-                isSoundOn ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4 pointer-events-none'
+                isSoundOn ? 'opacity-0 translate-x-4 pointer-events-none group-hover/sound:opacity-100 group-hover/sound:translate-x-0' : 'opacity-0 translate-x-4 pointer-events-none'
               }`}
           >
               scott buckley - growing up
@@ -501,7 +571,7 @@ export default function App() {
                      <div className="absolute inset-0 bg-gradient-to-b from-black via-black/60 to-transparent pointer-events-none"></div>
                    </div>
 
-                   <div className="relative z-10 flex flex-col gap-10 md:gap-16 w-full max-h-[55%] md:max-h-none overflow-hidden [mask-image:linear-gradient(to_bottom,black_80%,transparent_100%)] md:[mask-image:none]">
+                   <div className={`relative z-10 flex flex-col gap-10 md:gap-16 w-full lg:max-h-none overflow-hidden lg:[mask-image:none] ${activeService === index ? 'max-h-[50%] [mask-image:linear-gradient(to_bottom,black_60%,transparent_100%)]' : 'max-h-[800px] [mask-image:none]'}`}>
                      <div className="w-full relative">
                        <div className="text-[#5A5957] font-mono text-sm md:text-base lg:text-lg mb-4">{service.category}</div>
                        <div className={`h-[1px] w-full transition-colors duration-500 ${activeService === index ? 'bg-[#F05C3B]' : 'bg-[#1c1c1c]'}`}></div>
