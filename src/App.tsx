@@ -188,37 +188,37 @@ export default function App() {
 
       {/* CIRCULAR MENU */}
       <div 
-        className={`fixed top-[-10px] right-[-10px] md:top-[-15px] md:right-[-15px] w-[280px] md:w-[360px] h-[280px] md:h-[360px] rounded-full bg-[#0a0a0a]/50 backdrop-blur-xl z-40 flex flex-col items-center justify-center border border-white/10 shadow-[0_8_32px_rgba(0,0,0,0.5)] transition-all duration-[600ms] ease-[cubic-bezier(0.34,1.56,0.64,1)] origin-[calc(100%-50px)_50px] md:origin-[calc(100%-70px)_70px] ${isMenuOpen ? 'scale-100 opacity-100 pointer-events-auto' : 'scale-0 opacity-0 pointer-events-none'}`}
+        className={`fixed top-[-10px] right-[-10px] lg:top-[-15px] lg:right-[-15px] w-[280px] lg:w-[360px] h-[280px] lg:h-[360px] rounded-full bg-[#0a0a0a]/50 backdrop-blur-xl z-40 flex flex-col items-center justify-center border border-white/10 shadow-[0_8_32px_rgba(0,0,0,0.5)] transition-all duration-[600ms] ease-[cubic-bezier(0.34,1.56,0.64,1)] origin-[calc(100%-50px)_50px] lg:origin-[calc(100%-70px)_70px] ${isMenuOpen ? 'scale-100 opacity-100 pointer-events-auto' : 'scale-0 opacity-0 pointer-events-none'}`}
       >
-        <div className="flex flex-col items-start gap-4 md:gap-5 mb-6 md:mb-8 pt-6 pr-6 md:pt-8 md:pr-8">
+        <div className="flex flex-col items-start gap-4 lg:gap-5 mb-6 lg:mb-8 pt-6 pr-6 lg:pt-8 lg:pr-8">
           {['About', 'Work', 'Contact'].map((item, idx) => (
             <div key={item} className="overflow-hidden">
               <a 
                 href="#" 
                 onClick={() => setIsMenuOpen(false)} 
-                className={`flex items-center gap-1.5 md:gap-2 text-[#E8E6E3] hover:text-[#F05C3B] text-[8px] md:text-[10px] tracking-[0.1em] md:tracking-[0.15em] font-bold uppercase transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] group ${isMenuOpen ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}
+                className={`flex items-center gap-1.5 lg:gap-2 text-[#E8E6E3] hover:text-[#F05C3B] text-[8px] lg:text-[10px] tracking-[0.1em] lg:tracking-[0.15em] font-bold uppercase transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] group ${isMenuOpen ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}
                 style={{ transitionDelay: isMenuOpen ? `${100 + idx * 75}ms` : '0ms' }}
               >
-                <div className="h-[1px] bg-current transition-all w-0 group-hover:w-2 md:group-hover:w-3" />
+                <div className="h-[1px] bg-current transition-all w-0 group-hover:w-2 lg:group-hover:w-3" />
                 <span>{item}</span>
               </a>
             </div>
           ))}
         </div>
         <div 
-          className={`flex gap-6 pr-6 md:pr-8 transition-all duration-700 ease-out ${isMenuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+          className={`flex gap-6 pr-6 lg:pr-8 transition-all duration-700 ease-out ${isMenuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
           style={{ transitionDelay: isMenuOpen ? '350ms' : '0ms' }}
         >
-           <a href="#" className="text-[#5A5957] hover:text-[#F05C3B] transition-colors"><Instagram className="w-4 h-4 md:w-5 md:h-5" /></a>
-           <a href="#" className="text-[#5A5957] hover:text-[#F05C3B] transition-colors"><Dribbble className="w-4 h-4 md:w-5 md:h-5" /></a>
-           <a href="#" className="text-[#5A5957] hover:text-[#F05C3B] transition-colors"><Linkedin className="w-4 h-4 md:w-5 md:h-5" /></a>
+           <a href="#" className="text-[#5A5957] hover:text-[#F05C3B] transition-colors"><Instagram className="w-4 h-4 lg:w-5 lg:h-5" /></a>
+           <a href="#" className="text-[#5A5957] hover:text-[#F05C3B] transition-colors"><Dribbble className="w-4 h-4 lg:w-5 lg:h-5" /></a>
+           <a href="#" className="text-[#5A5957] hover:text-[#F05C3B] transition-colors"><Linkedin className="w-4 h-4 lg:w-5 lg:h-5" /></a>
         </div>
       </div>
 
       {/* FIXED FLOATING UI */}
       <div className={`fixed inset-0 pointer-events-none z-50 transition-colors duration-500`}>
         {/* Top Left - Logo */}
-        <div className="absolute top-0 left-0 w-[75px] md:w-[115px] h-[75px] md:h-[115px] flex items-center justify-center pointer-events-auto bg-transparent">
+        <div className="absolute top-0 left-0 w-[75px] lg:w-[115px] h-[75px] lg:h-[115px] flex items-center justify-center pointer-events-auto bg-transparent">
           <div className="text-[#E8E6E3] hover:text-[#F05C3B] transition-colors cursor-pointer group flex flex-col items-center">
               <div className="relative w-8 h-8 rounded-full border-2 border-current rounded-b flex items-end justify-center pb-1 overflow-hidden group-hover:scale-110 transition-transform">
                   <div className="w-1.5 h-3 bg-current rounded-full" />
@@ -229,24 +229,24 @@ export default function App() {
         </div>
 
         {/* Top Right - Nav */}
-        <div className={`absolute top-0 right-0 w-[75px] md:w-[115px] h-[75px] md:h-[115px] flex items-center justify-center bg-transparent overflow-hidden ${isScrolled || isMenuOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}>
+        <div className={`absolute top-0 right-0 w-[75px] lg:w-[115px] h-[75px] lg:h-[115px] flex items-center justify-center bg-transparent overflow-hidden ${isScrolled || isMenuOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}>
           <div className={`transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${isScrolled || isMenuOpen ? 'scale-100 opacity-100' : 'scale-50 opacity-0 pointer-events-none'}`}>
             <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-[#E8E6E3] hover:text-[#F05C3B] p-2 flex items-center justify-center transition-colors">
-              {isMenuOpen ? <X className="w-5 h-5 md:w-6 md:h-6" /> : <Menu className="w-5 h-5 md:w-6 md:h-6" />}
+              {isMenuOpen ? <X className="w-5 h-5 lg:w-6 lg:h-6" /> : <Menu className="w-5 h-5 lg:w-6 lg:h-6" />}
             </button>
           </div>
         </div>
 
         {/* Bottom Right - Sound */}
-        <div className="absolute bottom-0 right-0 w-[75px] md:w-[115px] h-[75px] md:h-[115px] flex items-center justify-center pointer-events-auto bg-transparent"
-             style={{ '--sp': `${Math.min(100, Math.max(0, (scrollY / (typeof window !== 'undefined' ? (window.innerWidth >= 768 ? 115 : 75) : 115)) * 100))}%` } as React.CSSProperties}
+        <div className="absolute bottom-0 right-0 w-[75px] lg:w-[115px] h-[75px] lg:h-[115px] flex items-center justify-center pointer-events-auto bg-transparent"
+             style={{ '--sp': `${Math.min(100, Math.max(0, (scrollY / (typeof window !== 'undefined' ? (window.innerWidth >= 1024 ? 115 : 75) : 115)) * 100))}%` } as React.CSSProperties}
         >
           <div 
               onClick={() => setIsSoundOn(!isSoundOn)}
               className="-rotate-90 origin-center cursor-pointer group grid relative"
           >
               {/* Back Layer (Video Area - Light Color) */}
-              <div className="col-start-1 row-start-1 flex items-center gap-1.5 whitespace-nowrap text-[8px] md:text-[10px] font-bold tracking-[0.1em] md:tracking-[0.15em]">
+              <div className="col-start-1 row-start-1 flex items-center gap-1.5 whitespace-nowrap text-[8px] lg:text-[10px] font-bold tracking-[0.1em] lg:tracking-[0.15em]">
                   <span className="text-[#c0c0c0] transition-colors group-hover:text-white">SOUND</span>
                   <div className="grid overflow-hidden">
                     <span className={`col-start-1 row-start-1 transition-all duration-500 ease-out ${isSoundOn ? '-translate-y-[150%] opacity-0' : 'translate-y-0 opacity-100'} text-white group-hover:text-gray-200`}>OFF</span>
@@ -255,7 +255,7 @@ export default function App() {
               </div>
 
               {/* Front Layer (Black Area - Gray Color) using Clip Path */}
-              <div className="col-start-1 row-start-1 flex items-center gap-1.5 whitespace-nowrap text-[8px] md:text-[10px] font-bold tracking-[0.1em] md:tracking-[0.15em]"
+              <div className="col-start-1 row-start-1 flex items-center gap-1.5 whitespace-nowrap text-[8px] lg:text-[10px] font-bold tracking-[0.1em] lg:tracking-[0.15em]"
                    style={{ clipPath: 'inset(0 calc(100% - var(--sp)) 0 0)' }}>
                   <span className="text-[#5A5957] transition-colors group-hover:text-[#8C8A87]">SOUND</span>
                   <div className="grid overflow-hidden">
@@ -267,7 +267,7 @@ export default function App() {
 
           {/* Song Info */}
           <div 
-              className={`absolute right-[calc(50%+15px)] md:right-[calc(50%+20px)] top-1/2 -translate-y-1/2 whitespace-nowrap text-[8px] md:text-[9px] font-medium tracking-[0.15em] md:tracking-[0.2em] uppercase text-[#8C8A87] transition-all duration-500 ease-out flex items-center gap-3 bg-black px-3 py-1.5 md:px-4 md:py-2 rounded-full ${
+              className={`absolute right-[calc(50%+15px)] lg:right-[calc(50%+20px)] top-1/2 -translate-y-1/2 whitespace-nowrap text-[8px] lg:text-[9px] font-medium tracking-[0.15em] lg:tracking-[0.2em] uppercase text-[#8C8A87] transition-all duration-500 ease-out flex items-center gap-3 bg-black px-3 py-1.5 lg:px-4 lg:py-2 rounded-full ${
                 isSoundOn ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4 pointer-events-none'
               }`}
           >
@@ -282,7 +282,7 @@ export default function App() {
       </div>
       
       {/* HERO SECTION */}
-      <div className="relative flex-none h-[100svh] w-full bg-black grid grid-cols-[75px_1fr_75px] md:grid-cols-[115px_1fr_115px] grid-rows-[75px_1fr_75px] md:grid-rows-[115px_1fr_115px] overflow-hidden">
+      <div className="relative flex-none h-[100svh] w-full bg-black grid grid-cols-[75px_1fr_75px] lg:grid-cols-[115px_1fr_115px] grid-rows-[75px_1fr_75px] lg:grid-rows-[115px_1fr_115px] overflow-hidden">
         
         {/* Video Background */}
         <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
@@ -293,7 +293,7 @@ export default function App() {
             loop 
             muted={!isSoundOn} 
             playsInline 
-            className="w-full h-full object-cover z-0 opacity-100 scale-105" 
+            className="w-full h-full object-cover object-[90%_center] lg:object-center z-0 opacity-100 scale-105" 
             style={{ transform: `translateY(${scrollY * 0.4}px)` }}
           />
         </div>
@@ -302,24 +302,24 @@ export default function App() {
         <div className="relative z-10 border-b border-r border-white/20" />
 
         {/* Top Center - Name */}
-        <div className="relative z-10 border-b border-white/20 flex flex-col items-center justify-end pb-6 md:pb-8">
-          <div className="border border-white/30 px-6 py-2 md:px-8 md:py-3 rounded-full uppercase tracking-[0.4em] md:tracking-[0.6em] text-[10px] md:text-xs font-extrabold text-white mix-blend-difference opacity-90 hover:opacity-100 transition-opacity cursor-default bg-white/20">
+        <div className="relative z-10 border-b border-white/20 flex flex-col items-center justify-end pb-6 lg:pb-8">
+          <div className="border border-white/30 px-6 py-2 lg:px-8 lg:py-3 rounded-full uppercase tracking-[0.4em] lg:tracking-[0.6em] text-[10px] lg:text-xs font-extrabold text-white mix-blend-difference opacity-90 hover:opacity-100 transition-opacity cursor-default bg-white/20">
             KUPI CAKE
           </div>
         </div>
 
         {/* Top Right - Navigation */}
         <div className="relative z-10 border-b border-l border-white/20 flex flex-col items-center justify-center">
-          <div className="flex flex-col items-start gap-1.5 md:gap-2.5">
+          <div className="flex flex-col items-start gap-1.5 lg:gap-2.5">
              {['About', 'Work', 'Contact'].map((item, idx) => (
                 <a 
                   key={item} 
                   href="#" 
-                  className={`text-[8px] md:text-[10px] tracking-[0.1em] md:tracking-[0.15em] font-bold uppercase transition-opacity flex items-center gap-1.5 md:gap-2 group text-white mix-blend-difference ${
+                  className={`text-[8px] lg:text-[10px] tracking-[0.1em] lg:tracking-[0.15em] font-bold uppercase transition-opacity flex items-center gap-1.5 lg:gap-2 group text-white mix-blend-difference ${
                     idx === 0 ? 'opacity-100' : 'opacity-60 hover:opacity-100'
                   }`}
                 >
-                    <div className={`h-[1px] bg-white transition-all ${idx === 0 ? 'w-2 md:w-3' : 'w-0 group-hover:w-2 md:group-hover:w-3'}`} />
+                    <div className={`h-[1px] bg-white transition-all ${idx === 0 ? 'w-2 lg:w-3' : 'w-0 group-hover:w-2 lg:group-hover:w-3'}`} />
                     <span>{item}</span>
                 </a>
              ))}
@@ -327,7 +327,7 @@ export default function App() {
         </div>
 
         {/* Center Left - Social Media */}
-        <div className="relative z-10 border-r border-white/20 flex flex-col items-center justify-center gap-8 md:gap-10">
+        <div className="relative z-10 border-r border-white/20 flex flex-col items-center justify-center gap-8 lg:gap-10">
           {[
             { Icon: Dribbble, label: 'Dribbble' },
             { Icon: Instagram, label: 'Instagram' },
@@ -340,7 +340,7 @@ export default function App() {
               aria-label={label}
               className="text-white mix-blend-difference opacity-60 hover:opacity-100 transition-all hover:scale-110"
             >
-              <Icon className={`w-4 h-4 md:w-5 md:h-5 ${className || ''}`} strokeWidth={2} />
+              <Icon className={`w-4 h-4 lg:w-5 lg:h-5 ${className || ''}`} strokeWidth={2} />
             </a>
           ))}
         </div>
@@ -349,10 +349,10 @@ export default function App() {
         <div className="relative z-10 flex items-center justify-center group cursor-crosshair mix-blend-difference px-10 py-10">
           {/* Inner flexible wrapper for animations without breaking grid */}
           <div className="relative w-full h-full transition-transform duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-active:scale-95 group-active:rotate-[45deg]">
-            <div className="absolute top-1/4 left-1/4 w-3 h-3 md:w-4 md:h-4 border-l-[2px] border-t-[2px] border-white/80 transition-all duration-300 opacity-50 group-hover:opacity-100 group-active:translate-x-4 group-active:translate-y-4" />
-            <div className="absolute top-1/4 right-1/4 w-3 h-3 md:w-4 md:h-4 border-r-[2px] border-t-[2px] border-white/80 transition-all duration-300 opacity-50 group-hover:opacity-100 group-active:-translate-x-4 group-active:translate-y-4" />
-            <div className="absolute bottom-1/4 left-1/4 w-3 h-3 md:w-4 md:h-4 border-l-[2px] border-b-[2px] border-white/80 transition-all duration-300 opacity-50 group-hover:opacity-100 group-active:translate-x-4 group-active:-translate-y-4" />
-            <div className="absolute bottom-1/4 right-1/4 w-3 h-3 md:w-4 md:h-4 border-r-[2px] border-b-[2px] border-white/80 transition-all duration-300 opacity-50 group-hover:opacity-100 group-active:-translate-x-4 group-active:-translate-y-4" />
+            <div className="absolute top-1/4 left-1/4 w-3 h-3 lg:w-4 lg:h-4 border-l-[2px] border-t-[2px] border-white/80 transition-all duration-300 opacity-50 group-hover:opacity-100 group-active:translate-x-4 group-active:translate-y-4" />
+            <div className="absolute top-1/4 right-1/4 w-3 h-3 lg:w-4 lg:h-4 border-r-[2px] border-t-[2px] border-white/80 transition-all duration-300 opacity-50 group-hover:opacity-100 group-active:-translate-x-4 group-active:translate-y-4" />
+            <div className="absolute bottom-1/4 left-1/4 w-3 h-3 lg:w-4 lg:h-4 border-l-[2px] border-b-[2px] border-white/80 transition-all duration-300 opacity-50 group-hover:opacity-100 group-active:translate-x-4 group-active:-translate-y-4" />
+            <div className="absolute bottom-1/4 right-1/4 w-3 h-3 lg:w-4 lg:h-4 border-r-[2px] border-b-[2px] border-white/80 transition-all duration-300 opacity-50 group-hover:opacity-100 group-active:-translate-x-4 group-active:-translate-y-4" />
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-[2px] bg-white/80 transition-all duration-300 opacity-50 group-hover:opacity-100 group-active:scale-[0.2]" />
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[2px] h-2 bg-white/80 transition-all duration-300 opacity-50 group-hover:opacity-100 group-active:scale-[0.2]" />
           </div>
@@ -378,7 +378,7 @@ export default function App() {
       </div>
 
       {/* ABOUT SECTION */}
-      <div className="w-full bg-[#1c1c1c] grid grid-cols-[75px_1fr_75px] md:grid-cols-[115px_1fr_115px] auto-rows-auto gap-[1px]">
+      <div className="w-full bg-[#1c1c1c] grid grid-cols-[75px_1fr_75px] lg:grid-cols-[115px_1fr_115px] auto-rows-auto gap-[1px]">
         
         {/* Left Grid Margin */}
         <div className="bg-black col-start-1 col-end-2 row-start-1" />
@@ -428,7 +428,7 @@ export default function App() {
       </div>
 
       {/* --- Section 3: What I Do (Bento Grid) --- */}
-      <div className="min-h-screen grid md:grid-cols-[115px_1fr_115px] grid-cols-[75px_1fr_75px] gap-[1px]">
+      <div className="min-h-screen grid lg:grid-cols-[115px_1fr_115px] grid-cols-[75px_1fr_75px] gap-[1px]">
         {/* Left Grid Margin */}
         <div className="bg-black col-start-1 col-end-2 row-start-1" />
         
@@ -501,23 +501,25 @@ export default function App() {
                      <div className="absolute inset-0 bg-gradient-to-b from-black via-black/60 to-transparent pointer-events-none"></div>
                    </div>
 
-                   <div className="w-full relative z-10">
-                     <div className="text-[#5A5957] font-mono text-sm md:text-base lg:text-lg mb-4">{service.category}</div>
-                     <div className={`h-[1px] w-full transition-colors duration-500 ${activeService === index ? 'bg-[#F05C3B]' : 'bg-[#1c1c1c]'}`}></div>
+                   <div className="relative z-10 flex flex-col gap-10 md:gap-16 w-full max-h-[55%] md:max-h-none overflow-hidden [mask-image:linear-gradient(to_bottom,black_80%,transparent_100%)] md:[mask-image:none]">
+                     <div className="w-full relative">
+                       <div className="text-[#5A5957] font-mono text-sm md:text-base lg:text-lg mb-4">{service.category}</div>
+                       <div className={`h-[1px] w-full transition-colors duration-500 ${activeService === index ? 'bg-[#F05C3B]' : 'bg-[#1c1c1c]'}`}></div>
+                     </div>
+                     
+                     <div className="flex flex-col gap-4 -mt-2 md:-mt-4 relative z-10">
+                       {service.diamond && (
+                         <div className={`absolute -left-6 md:-left-8 top-1 md:top-2 text-[#E8E6E3] transition-opacity duration-500 text-2xl md:text-4xl ${activeService === index ? 'opacity-100' : 'opacity-0'}`}>✦</div>
+                       )}
+                       <div className={`font-normal text-3xl md:text-5xl xl:text-[52px] leading-[1.1] tracking-tight transition-colors duration-500 ${activeService === index ? 'text-[#F05C3B]' : 'text-[#E8E6E3]'}`}>{service.title}</div>
+                     </div>
+                     
+                     <div className="text-[#8C8A87] text-base md:text-lg lg:text-xl font-light leading-[1.6] relative z-10 pb-4">
+                       {service.desc}
+                     </div>
                    </div>
                    
-                   <div className="flex flex-col gap-4 -mt-2 md:-mt-4 relative z-10">
-                     {service.diamond && (
-                       <div className={`absolute -left-6 md:-left-8 top-1 md:top-2 text-[#E8E6E3] transition-opacity duration-500 text-2xl md:text-4xl ${activeService === index ? 'opacity-100' : 'opacity-0'}`}>✦</div>
-                     )}
-                     <div className={`font-normal text-3xl md:text-5xl xl:text-[52px] leading-[1.1] tracking-tight transition-colors duration-500 ${activeService === index ? 'text-[#F05C3B]' : 'text-[#E8E6E3]'}`}>{service.title}</div>
-                   </div>
-                   
-                   <div className="text-[#8C8A87] text-base md:text-lg lg:text-xl font-light leading-[1.6] relative z-10">
-                     {service.desc}
-                   </div>
-                   
-                   <div className="mt-auto flex justify-start items-end pt-12 relative z-10">
+                   <div className="mt-auto flex justify-start items-end pt-12 relative z-10 pointer-events-none">
                      <div className={`font-normal text-3xl md:text-4xl xl:text-5xl leading-[1.05] md:leading-[1.1] tracking-tight transition-colors duration-500 select-none ${activeService === index ? 'text-[#F05C3B]' : 'text-white/50'}`}>{service.num}</div>
                    </div>
                 </div>
@@ -530,7 +532,7 @@ export default function App() {
       </div>
 
       {/* --- Section 4: My Work --- */}
-      <div className="w-full bg-[#1c1c1c] grid md:grid-cols-[115px_1fr_115px] grid-cols-[75px_1fr_75px] auto-rows-auto gap-[1px]">
+      <div className="w-full bg-[#1c1c1c] grid lg:grid-cols-[115px_1fr_115px] grid-cols-[75px_1fr_75px] auto-rows-auto gap-[1px]">
         {/* Left Grid Margin */}
         <div className="bg-black col-start-1 col-end-2 row-start-1" />
         
