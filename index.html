@@ -3,8 +3,24 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <title>Kupi Cake's Portfolio</title>
+    <title>Kupicake's Portfolio</title>
+    <script>
+      // Protect against read-only window.fetch in sandboxed iframe environments
+      (function() {
+        try {
+          var originalFetch = window.fetch;
+          var customFetch = originalFetch;
+          Object.defineProperty(window, 'fetch', {
+            get: function() { return customFetch; },
+            set: function(val) { customFetch = val; },
+            configurable: true,
+            enumerable: true
+          });
+        } catch (e) {
+          console.warn("Could not patch window.fetch setter", e);
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
