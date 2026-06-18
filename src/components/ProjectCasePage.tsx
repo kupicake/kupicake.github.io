@@ -134,10 +134,23 @@ const creativeSteps = [
   }
 ];
 
-const CreativeProcess = () => {
+const CreativeProcess = ({ projectIndex }: { projectIndex?: number }) => {
   const [activeStep, setActiveStep] = useState(0);
+  const [localScrollY, setLocalScrollY] = useState(0);
+
+  const pipelineHeadingRef = React.useRef<HTMLHeadingElement>(null);
+  const pipelineTextRef = React.useRef<HTMLParagraphElement>(null);
 
   useEffect(() => {
+    const handleScroll = () => {
+      setLocalScrollY(window.scrollY);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    
+    // Safety delay trigger
+    const t = setTimeout(handleScroll, 100);
+
     const observers: IntersectionObserver[] = [];
     
     creativeSteps.forEach((_, idx) => {
@@ -161,6 +174,8 @@ const CreativeProcess = () => {
 
     return () => {
       observers.forEach(o => o.disconnect());
+      window.removeEventListener("scroll", handleScroll);
+      clearTimeout(t);
     };
   }, []);
 
@@ -172,21 +187,75 @@ const CreativeProcess = () => {
     }
   };
 
+  const windowHeight = typeof window !== "undefined" ? window.innerHeight : 0;
+  let pipelineHeadingProgress = 0;
+  let pipelineTextProgress = 0;
+
+  if (pipelineHeadingRef.current && windowHeight > 0) {
+    const rect = pipelineHeadingRef.current.getBoundingClientRect();
+    const startY = windowHeight * 0.95;
+    const endY = windowHeight * 0.45;
+    pipelineHeadingProgress = Math.max(0, Math.min(1, (startY - rect.top) / (startY - endY)));
+  }
+
+  if (pipelineTextRef.current && windowHeight > 0) {
+    const rect = pipelineTextRef.current.getBoundingClientRect();
+    const startY = windowHeight * 0.85;
+    const endY = windowHeight * 0.35;
+    pipelineTextProgress = Math.max(0, Math.min(1, (startY - rect.top) / (startY - endY)));
+  }
+
   return (
     <div className="w-full bg-[#FAF9F5] border-t border-[#E5E2DC]">
-      {/* Header Block Section matches Case Synopsis styling */}
-      <div className="bg-[#FAF9F5] p-6 md:p-10 lg:p-14 border-b border-[#E5E2DC] relative">
-        <div className="absolute right-6 lg:right-14 top-6 lg:top-14 font-mono text-[9px] text-[#AE9E8E] bg-[#f0ebd9] px-2.5 py-1 tracking-wider uppercase">
-          STAGE 05 // SYSTEM WORKFLOW
+      {/* THE CREATIVE PROCESS - STYLED EXACTLY LIKE CONCEPT */}
+      <div 
+        className="bg-[#FAF9F5] border-b border-[#E5E2DC] py-24 md:py-32 px-6 md:px-10 flex flex-col justify-center items-start w-full"
+      >
+        <div ref={pipelineHeadingRef} className="w-full flex justify-between items-baseline mb-8 md:mb-12">
+          <h2 className="font-bold text-xs md:text-sm tracking-[0.4em] md:tracking-[0.6em] uppercase">
+            <span
+              style={{
+                backgroundImage: `linear-gradient(to right, #333333 ${Math.min(100, pipelineHeadingProgress * 100)}%, #b5b5b0 ${Math.min(100, pipelineHeadingProgress * 100)}%)`,
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+                color: "transparent",
+              }}
+            >
+              {projectIndex === 0 ? "THE PROCESS" : "THE CREATIVE PROCESS"}
+            </span>
+          </h2>
+          <span className="font-mono text-[9px] text-[#F05C3B]/60 tracking-wider font-light uppercase hidden md:inline">
+            05 // THE PRODUCTION PIPELINE
+          </span>
         </div>
-        <span className="font-mono text-[9px] text-[#F05C3B] uppercase tracking-widest block mb-4.5">
-          05 // THE PRODUCTION PIPELINE
-        </span>
-        <h3 className="font-sans text-xl md:text-2xl font-light leading-snug text-[#161616] mb-3">
-          The Creative Process
-        </h3>
-        <p className="text-[#5a564e] text-xs md:text-sm font-light leading-relaxed select-text max-w-xl">
-          The production workflow is broken down into six distinct stages, tracing the evolution from abstract thought to kinetic canvas.
+        <p 
+          ref={pipelineTextRef}
+          className="text-xl md:text-3xl lg:text-[38px] xl:text-[40px] font-normal leading-[1.1] md:leading-[1.15] tracking-tight text-[#161616]/40 select-text w-full"
+        >
+          {pipelineWords.map((word, i) => {
+            const fillPercentage = Math.max(
+              0,
+              Math.min(100, (pipelineTextProgress * pipelineWords.length - i) * 100),
+            );
+            const targetColor = word.h ? "#F05C3B" : "#333333";
+            return (
+              <span key={i}>
+                <span
+                  style={{
+                    backgroundImage: `linear-gradient(to right, ${targetColor} ${fillPercentage}%, #b5b5b0 ${fillPercentage}%)`,
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    backgroundClip: "text",
+                    color: "transparent",
+                  }}
+                >
+                  {word.w}
+                </span>
+                {i < pipelineWords.length - 1 && " "}
+              </span>
+            );
+          })}
         </p>
       </div>
 
@@ -343,6 +412,166 @@ const CreativeProcess = () => {
   );
 };
 
+const conceptWordsProcrastination = [
+  { w: "The", h: false },
+  { w: "main", h: false },
+  { w: "illustration", h: false },
+  { w: "features", h: false },
+  { w: "a", h: false },
+  { w: "tired", h: true },
+  { w: "young", h: true },
+  { w: "man", h: true },
+  { w: "escaping", h: false },
+  { w: "into", h: false },
+  { w: "his", h: false },
+  { w: "imagination—doing", h: true },
+  { w: "anything", h: false },
+  { w: "but", h: false },
+  { w: "working.", h: false },
+  { w: "This", h: false },
+  { w: "reflects", h: false },
+  { w: "my", h: false },
+  { w: "own", h: false },
+  { w: "creative", h: false },
+  { w: "process:", h: false },
+  { w: "a", h: false },
+  { w: "journey", h: false },
+  { w: "of", h: false },
+  { w: "overthinking", h: true },
+  { w: "and", h: false },
+  { w: "self-doubt,", h: false },
+  { w: "which", h: false },
+  { w: "ultimately", h: false },
+  { w: "leads", h: false },
+  { w: "to", h: false },
+  { w: "rediscovery.", h: true },
+  { w: "When", h: false },
+  { w: "I", h: false },
+  { w: "finally", h: false },
+  { w: "create,", h: true },
+  { w: "I", h: false },
+  { w: "find", h: false },
+  { w: "myself", h: false },
+  { w: "again,", h: false },
+  { w: "shaping", h: false },
+  { w: "the", h: false },
+  { w: "world", h: false },
+  { w: "I", h: false },
+  { w: "want", h: false },
+  { w: "to", h: false },
+  { w: "live", h: false },
+  { w: "in.", h: true },
+];
+
+const conceptWordsSweetheart = [
+  { w: "The", h: false },
+  { w: "story", h: false },
+  { w: "follows", h: false },
+  { w: "Avi", h: true },
+  { w: "Sina,", h: true },
+  { w: "an", h: false },
+  { w: "awkward", h: true },
+  { w: "high", h: false },
+  { w: "school", h: false },
+  { w: "girl", h: false },
+  { w: "who", h: false },
+  { w: "accidentally", h: false },
+  { w: "crosses", h: false },
+  { w: "paths", h: false },
+  { w: "with", h: false },
+  { w: "a", h: false },
+  { w: "mysterious,", h: true },
+  { w: "intimidating", h: true },
+  { w: "boy", h: true },
+  { w: "who", h: false },
+  { w: "secretly", h: false },
+  { w: "harbors", h: false },
+  { w: "feelings", h: true },
+  { w: "for", h: false },
+  { w: "her.", h: false },
+  { w: "This", h: false },
+  { w: "unexpected", h: true },
+  { w: "encounter", h: false },
+  { w: "sparks", h: false },
+  { w: "a", h: false },
+  { w: "chaotic", h: true },
+  { w: "and", h: false },
+  { w: "heartwarming", h: true },
+  { w: "new", h: false },
+  { w: "chapter", h: false },
+  { w: "in", h: false },
+  { w: "their", h: false },
+  { w: "school", h: false },
+  { w: "lives.", h: true },
+];
+
+const conceptWordsDeadliner = [
+  { w: "The", h: false },
+  { w: "main", h: false },
+  { w: "illustration", h: false },
+  { w: "depics", h: false },
+  { w: "the", h: false },
+  { w: "overwhelming", h: true },
+  { w: "anxiety", h: true },
+  { w: "and", h: false },
+  { w: "manic", h: true },
+  { w: "energy", h: true },
+  { w: "of", h: false },
+  { w: "academic", h: false },
+  { w: "deadline", h: true },
+  { w: "struggles.", h: true },
+  { w: "It", h: false },
+  { w: "follows", h: false },
+  { w: "Dudung,", h: true },
+  { w: "a", h: false },
+  { w: "sleep-deprived,", h: true },
+  { w: "optimistic", h: false },
+  { w: "perfectionist", h: false },
+  { w: "student,", h: false },
+  { w: "dodging", h: false },
+  { w: "obstacles,", h: false },
+  { w: "chasing", h: false },
+  { w: "late-night", h: false },
+  { w: "espresso", h: true },
+  { w: "boosts,", h: false },
+  { w: "and", h: false },
+  { w: "racing", h: false },
+  { w: "frantically", h: false },
+  { w: "against", h: false },
+  { w: "ticking", h: true },
+  { w: "hours", h: true },
+  { w: "to", h: false },
+  { w: "conquer", h: false },
+  { w: "his", h: false },
+  { w: "final", h: false },
+  { w: "thesis", h: true },
+  { w: "before", h: false },
+  { w: "exhaustion", h: true },
+  { w: "strikes.", h: true },
+];
+
+const pipelineWords = [
+  { w: "The", h: false },
+  { w: "production", h: true },
+  { w: "workflow", h: false },
+  { w: "is", h: false },
+  { w: "broken", h: false },
+  { w: "down", h: false },
+  { w: "into", h: false },
+  { w: "six", h: true },
+  { w: "distinct", h: false },
+  { w: "stages,", h: true },
+  { w: "tracing", h: false },
+  { w: "the", h: false },
+  { w: "evolution", h: true },
+  { w: "from", h: false },
+  { w: "abstract", h: true },
+  { w: "thought", h: false },
+  { w: "to", h: false },
+  { w: "kinetic", h: true },
+  { w: "canvas.", h: true },
+];
+
 interface ProjectCasePageProps {
   project: Project;
   projectIndex: number;
@@ -351,6 +580,7 @@ interface ProjectCasePageProps {
   onPrev: () => void;
   onNext: () => void;
   getToolIcon: (tool: string) => React.ReactNode;
+  scrollY?: number;
 }
 
 export default function ProjectCasePage({
@@ -361,8 +591,66 @@ export default function ProjectCasePage({
   onPrev,
   onNext,
   getToolIcon,
+  scrollY,
 }: ProjectCasePageProps) {
   const [copiedColor, setCopiedColor] = useState<string | null>(null);
+
+  // Local scroll state to force re-renders on scroll so bounding client rects are recalculated in real time
+  const [localScrollY, setLocalScrollY] = useState(0);
+
+  const currentScroll = scrollY !== undefined ? scrollY : localScrollY;
+
+  const conceptWords = 
+    projectIndex === 0 
+      ? conceptWordsProcrastination 
+      : projectIndex === 1 
+      ? conceptWordsSweetheart 
+      : conceptWordsDeadliner;
+
+  const conceptSubLabel = 
+    projectIndex === 0 
+      ? "04 // DAYDREAM ANATOMY • SUBCONSCIOUS DRIFT" 
+      : projectIndex === 1 
+      ? "04 // CINEMATIC NARRATIVE • VISUAL SYNERGY" 
+      : "04 // EXHAUSTION DYNAMICS • ACADEMIC RACE";
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setLocalScrollY(window.scrollY);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    
+    // Safety delay trigger
+    const t = setTimeout(handleScroll, 100);
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      clearTimeout(t);
+    };
+  }, []);
+
+  // Concept section scroll anim refs (calculated dynamically on each render linked with scrollY/localScrollY)
+  const theConceptRef = React.useRef<HTMLDivElement>(null);
+  const conceptHeadingRef = React.useRef<HTMLHeadingElement>(null);
+
+  const windowHeight = typeof window !== "undefined" ? window.innerHeight : 0;
+  let conceptHeadingProgress = 0;
+  let conceptTextProgress = 0;
+
+  if (conceptHeadingRef.current && windowHeight > 0) {
+    const rect = conceptHeadingRef.current.getBoundingClientRect();
+    const startY = windowHeight * 0.95;
+    const endY = windowHeight * 0.45;
+    conceptHeadingProgress = Math.max(0, Math.min(1, (startY - rect.top) / (startY - endY)));
+  }
+
+  if (theConceptRef.current && windowHeight > 0) {
+    const rect = theConceptRef.current.getBoundingClientRect();
+    const startY = windowHeight * 0.85;
+    const endY = windowHeight * 0.35;
+    conceptTextProgress = Math.max(0, Math.min(1, (startY - rect.top) / (startY - endY)));
+  }
 
   // Case study interactive state
   // Case 1: Procrastination
@@ -675,18 +963,27 @@ export default function ProjectCasePage({
             />
             {projectIndex === 1 ? (
               <div className="absolute inset-0 w-full h-full z-0 overflow-hidden">
-                {/* Blurry Background */}
+                {/* Blurry Background with Parallax */}
                 <img
                   src={project.image}
                   alt={project.title}
                   referrerPolicy="no-referrer"
                   loading="lazy"
-                  className="w-full h-full object-cover blur-[8px] scale-[1.08] transition-all duration-700 brightness-95"
+                  className="w-full h-full object-cover blur-[8px] transition-transform duration-100 ease-out brightness-95"
+                  style={{
+                    transform: `translateY(${currentScroll * 0.15}px) scale(1.15)`,
+                    transformOrigin: "center center",
+                  }}
                 />
                 
-                {/* Foreground Character layered cleanly in front */}
+                {/* Foreground Character with Parallax layered cleanly in front */}
                 {project.foregroundImage && (
-                  <div className="absolute inset-x-0 bottom-0 top-[2%] z-10 pointer-events-none flex items-end justify-center select-none overflow-visible">
+                  <div 
+                    className="absolute inset-x-0 bottom-0 top-[2%] z-10 pointer-events-none flex items-end justify-center select-none overflow-visible transition-transform duration-100 ease-out"
+                    style={{
+                      transform: `translateY(${currentScroll * 0.05}px)`,
+                    }}
+                  >
                     <img
                       src={project.foregroundImage}
                       referrerPolicy="no-referrer"
@@ -698,13 +995,20 @@ export default function ProjectCasePage({
                 )}
               </div>
             ) : (
-              <img
-                src={project.image}
-                alt={project.title}
-                referrerPolicy="no-referrer"
-                loading="lazy"
-                className="w-full h-full object-cover"
-              />
+              <div className="absolute inset-0 w-full h-full overflow-hidden">
+                {/* Background Image with Parallax for simple full designs */}
+                <img
+                  src={project.image}
+                  alt={project.title}
+                  referrerPolicy="no-referrer"
+                  loading="lazy"
+                  className="w-full h-full object-cover transition-transform duration-100 ease-out"
+                  style={{
+                    transform: `translateY(${currentScroll * 0.15}px) scale(1.15)`,
+                    transformOrigin: "center center",
+                  }}
+                />
+              </div>
             )}
             
             {/* Elegant metadata details bar overlaid */}
@@ -791,14 +1095,6 @@ export default function ProjectCasePage({
                         This project is dedicated to myself and my family, who have always supported me. It serves as a personal showcase, bridging emotional storytelling with motion art to express my identity as a creator.
                       </p>
                     </div>
-                    <div>
-                      <h3 className="font-sans text-xl md:text-2xl font-light leading-snug text-[#161616] mb-3">
-                        The Concept
-                      </h3>
-                      <p className="text-[#5a564e] text-xs md:text-sm font-light leading-relaxed select-text">
-                        The main illustration features a tired young man escaping into his imagination—doing anything but working. This reflects my own creative process: a journey of overthinking and self-doubt, which ultimately leads to rediscovery. When I finally create, I find myself again, shaping the world I want to live in.
-                      </p>
-                    </div>
                   </div>
                 ) : projectIndex === 1 ? (
                   <div className="space-y-6">
@@ -808,14 +1104,6 @@ export default function ProjectCasePage({
                       </h3>
                       <p className="text-[#5a564e] text-xs md:text-sm font-light leading-relaxed select-text">
                         The LINE Webtoon Contest 2025 is a major industry event challenging creators to pitch original stories for a chance at a grand prize and an official debut.
-                      </p>
-                    </div>
-                    <div>
-                      <h3 className="font-sans text-xl md:text-2xl font-light leading-snug text-[#161616] mb-3">
-                        The Story
-                      </h3>
-                      <p className="text-[#5a564e] text-xs md:text-sm font-light leading-relaxed select-text">
-                        The story follows Avi Sina, an awkward high school girl who accidentally crosses paths with a mysterious, intimidating boy who secretly harbors feelings for her. This unexpected encounter sparks a chaotic and heartwarming new chapter in their school lives.
                       </p>
                     </div>
                   </div>
@@ -899,18 +1187,70 @@ export default function ProjectCasePage({
             </div>
           </div>
 
-          {/* DYNAMIC CASE SHOWCASE HUB (04) */}
+          {/* THE CONCEPT - NEW SECTION STYLED LIKE ABOUT ME */}
+          <div 
+            className="bg-[#FAF9F5] border-b border-[#E5E2DC] py-24 md:py-32 px-6 md:px-10 flex flex-col justify-center items-start w-full"
+          >
+            <div ref={conceptHeadingRef} className="w-full flex justify-between items-baseline mb-8 md:mb-12">
+              <h2 className="font-bold text-xs md:text-sm tracking-[0.4em] md:tracking-[0.6em] uppercase">
+                <span
+                  style={{
+                    backgroundImage: `linear-gradient(to right, #333333 ${Math.min(100, conceptHeadingProgress * 100)}%, #b5b5b0 ${Math.min(100, conceptHeadingProgress * 100)}%)`,
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    backgroundClip: "text",
+                    color: "transparent",
+                  }}
+                >
+                  {projectIndex === 1 ? "THE STORY" : "THE CONCEPT"}
+                </span>
+              </h2>
+              <span className="font-mono text-[9px] text-[#F05C3B]/60 tracking-wider font-light uppercase hidden md:inline">
+                {conceptSubLabel}
+              </span>
+            </div>
+            <p 
+              ref={theConceptRef}
+              className="text-xl md:text-3xl lg:text-[38px] xl:text-[40px] font-normal leading-[1.1] md:leading-[1.15] tracking-tight text-[#161616]/40 select-text w-full"
+            >
+              {conceptWords.map((word, i) => {
+                const fillPercentage = Math.max(
+                  0,
+                  Math.min(100, (conceptTextProgress * conceptWords.length - i) * 100),
+                );
+                const targetColor = word.h ? "#F05C3B" : "#333333";
+                return (
+                  <span key={i}>
+                    <span
+                      style={{
+                        backgroundImage: `linear-gradient(to right, ${targetColor} ${fillPercentage}%, #b5b5b0 ${fillPercentage}%)`,
+                        WebkitBackgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
+                        backgroundClip: "text",
+                        color: "transparent",
+                      }}
+                    >
+                      {word.w}
+                    </span>
+                    {i < conceptWords.length - 1 && " "}
+                  </span>
+                );
+              })}
+            </p>
+          </div>
+
+          {/* DYNAMIC CASE SHOWCASE HUB (05) */}
           <div className={`w-full bg-[#FAF9F5] border-b border-[#E5E2DC] ${projectIndex === 0 ? "p-0" : "p-6 md:p-10 lg:p-14"}`}>
             {projectIndex !== 0 ? (
               <>
-                <span className="font-mono text-[9px] text-[#F05C3B] uppercase tracking-widest block mb-4">
-                  {projectIndex === 1 ? "04 // CREATIVE CONTRIBUTION" : "04 // INTERACTIVE METAPHOR EXPLORER"}
+                <span className="font-mono text-[9px] text-[#F05C3B] uppercase tracking-widest block mb-4.5">
+                  {projectIndex === 1 ? "05 // CREATIVE CONTRIBUTION" : "05 // INTERACTIVE METAPHOR EXPLORER"}
                 </span>
-                <h2 className="text-2xl md:text-4xl font-normal leading-tight tracking-tight text-[#161616] mb-3">
+                <h3 className="font-sans text-xl md:text-2xl font-light leading-snug text-[#161616] mb-3">
                   {projectIndex === 1 && "Visual Development & Comic Craft"}
                   {projectIndex === 2 && "Dudung Thesis Sprint Simulator"}
-                </h2>
-                <p className="text-[#8c8275] text-[11px] uppercase font-mono tracking-widest mb-10">
+                </h3>
+                <p className="text-[#5a564e] text-xs md:text-sm font-light leading-relaxed select-text mb-10">
                   {projectIndex === 1 && "Key contributions as Character Designer, Cover Artist, and Storyboarder."}
                   {projectIndex === 2 && "A retro interactive debugger dashboard showing play states & levels."}
                 </p>
@@ -1311,7 +1651,7 @@ export default function ProjectCasePage({
                 </div>
               </div>
               
-              <CreativeProcess />
+              <CreativeProcess projectIndex={projectIndex} />
              </>
             )}
 
@@ -1325,14 +1665,14 @@ export default function ProjectCasePage({
                   <div className="flex flex-col gap-8">
                     {/* Character Concept Text */}
                     <div className="max-w-3xl">
-                      <div className="flex items-center gap-3 mb-4">
-                        <span className="font-mono text-[9px] text-[#AE9E8E] uppercase tracking-widest block">CREATIVE FOCUS 01</span>
+                      <div className="flex items-center gap-3 mb-4.5">
+                        <span className="font-mono text-[9px] text-[#F05C3B] uppercase tracking-widest block">CREATIVE FOCUS 01</span>
                         <span className="font-mono text-[8px] text-[#F05C3B] uppercase tracking-widest font-semibold bg-[#F05C3B]/10 px-2 py-0.5 rounded">DESIGNER</span>
                       </div>
-                      <h3 className="text-xl lg:text-3xl font-normal text-[#161616] mb-4 font-sans tracking-tight">
+                      <h3 className="font-sans text-xl md:text-2xl font-light leading-snug text-[#161616] mb-3">
                         Character Concept Art
                       </h3>
-                      <p className="text-[#5a564e] text-xs lg:text-sm font-light leading-relaxed select-text">
+                      <p className="text-[#5a564e] text-xs md:text-sm font-light leading-relaxed select-text">
                         As the character designer, my goal was to create a memorable cast whose personalities instantly resonate with the readers. I translated their distinct traits through expressive gestures, unique outfits, and signature hairstyles.
                       </p>
                     </div>
@@ -1382,14 +1722,14 @@ export default function ProjectCasePage({
 
                     {/* Cover Design Text (Cols 8-12, Order 1 on Mobile, Order 2 on Large) */}
                     <div className="lg:col-span-5 order-1 lg:order-2">
-                      <div className="flex items-center gap-3 mb-4">
-                        <span className="font-mono text-[9px] text-[#AE9E8E] uppercase tracking-widest block">CREATIVE FOCUS 02</span>
+                      <div className="flex items-center gap-3 mb-4.5">
+                        <span className="font-mono text-[9px] text-[#F05C3B] uppercase tracking-widest block">CREATIVE FOCUS 02</span>
                         <span className="font-mono text-[8px] text-[#F05C3B] uppercase tracking-widest font-semibold bg-[#F05C3B]/10 px-2 py-0.5 rounded">DIRECTOR</span>
                       </div>
-                      <h3 className="text-xl lg:text-2xl font-normal text-[#161616] mb-4 font-sans tracking-tight">
+                      <h3 className="font-sans text-xl md:text-2xl font-light leading-snug text-[#161616] mb-3">
                         Cover Design & Composition
                       </h3>
-                      <p className="text-[#5a564e] text-xs lg:text-sm font-light leading-relaxed select-text">
+                      <p className="text-[#5a564e] text-xs md:text-sm font-light leading-relaxed select-text">
                         In designing the main cover, the challenge was to encapsulate the entire narrative essence within a single, compelling frame. I opted for a high-angle shot (POV), dynamic composition. This perspective not only emphasizes the characters' body language clearly but also creates an engaging, unambiguous focal point that draws potential readers in.
                       </p>
                     </div>
@@ -1402,14 +1742,14 @@ export default function ProjectCasePage({
                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-center">
                     {/* Storyboard Text (Cols 1-5) */}
                     <div className="lg:col-span-5 order-1">
-                      <div className="flex items-center gap-3 mb-4">
-                        <span className="font-mono text-[9px] text-[#AE9E8E] uppercase tracking-widest block">CREATIVE FOCUS 03</span>
+                      <div className="flex items-center gap-3 mb-4.5">
+                        <span className="font-mono text-[9px] text-[#F05C3B] uppercase tracking-widest block">CREATIVE FOCUS 03</span>
                         <span className="font-mono text-[8px] text-[#F05C3B] uppercase tracking-widest font-semibold bg-[#F05C3B]/10 px-2 py-0.5 rounded">STORYBOARD</span>
                       </div>
-                      <h3 className="text-xl lg:text-2xl font-normal text-[#161616] mb-4 font-sans tracking-tight">
+                      <h3 className="font-sans text-xl md:text-2xl font-light leading-snug text-[#161616] mb-3">
                         Storyboarding
                       </h3>
-                      <p className="text-[#5a564e] text-xs lg:text-sm font-light leading-relaxed select-text">
+                      <p className="text-[#5a564e] text-xs md:text-sm font-light leading-relaxed select-text">
                         As the storyboard artist, I was responsible for the visual pacing and narrative flow. I carefully structured the panel transitions to ensure a seamless, engaging reading experience, translating the script into a dynamic visual guide that guides the reader’s emotions from panel to panel.
                       </p>
                     </div>

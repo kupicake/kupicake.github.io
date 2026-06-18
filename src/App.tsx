@@ -24,6 +24,21 @@ import {
   MapPin,
 } from "lucide-react";
 
+const getPathForIndex = (index: number) => {
+  if (index === 0) return "/case-1-procrastination";
+  if (index === 1) return "/case-2-scary-sweetheart";
+  if (index === 2) return "/case-3-deadliner";
+  return "/";
+};
+
+const getIndexForPath = (path: string) => {
+  const p = path.toLowerCase().replace(/\/$/, "");
+  if (p.includes("case-1-procrastination")) return 0;
+  if (p.includes("case-2-scary-sweetheart")) return 1;
+  if (p.includes("case-3-deadliner")) return 2;
+  return -1;
+};
+
 const projectSamples = [
   {
     num: "01",
@@ -219,7 +234,13 @@ export default function App() {
   const [windowHeight, setWindowHeight] = useState(0);
   const [activeService, setActiveService] = useState(0);
   const [isServiceZoomed, setIsServiceZoomed] = useState(false);
-  const [activeProject, setActiveProject] = useState(0);
+  const [activeProject, setActiveProject] = useState(() => {
+    if (typeof window !== "undefined") {
+      const index = getIndexForPath(window.location.pathname);
+      return index !== -1 ? index : 0;
+    }
+    return 0;
+  });
   const [hoveredWorkFrame, setHoveredWorkFrame] = useState<string | null>(null);
   const [sampleTouched, setSampleTouched] = useState(false);
 
@@ -325,7 +346,48 @@ export default function App() {
     return { height: "75%" };
   };
 
-  const [activeView, setActiveView] = useState<{ type: "home" } | { type: "project"; index: number }>({ type: "home" });
+  const [activeView, _setActiveView] = useState<{ type: "home" } | { type: "project"; index: number }>(() => {
+    if (typeof window !== "undefined") {
+      const index = getIndexForPath(window.location.pathname);
+      if (index !== -1) {
+        return { type: "project", index };
+      }
+    }
+    return { type: "home" };
+  });
+
+  const setActiveView = (view: { type: "home" } | { type: "project"; index: number } | ((prev: any) => any)) => {
+    const nextView = typeof view === "function" ? view(activeView) : view;
+    _setActiveView(nextView);
+    if (typeof window !== "undefined") {
+      if (nextView.type === "project") {
+        const path = getPathForIndex(nextView.index);
+        if (window.location.pathname !== path) {
+          window.history.pushState({ type: "project", index: nextView.index }, "", path);
+        }
+        setActiveProject(nextView.index);
+      } else {
+        if (window.location.pathname !== "/") {
+          window.history.pushState({ type: "home" }, "", "/");
+        }
+      }
+    }
+  };
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const path = window.location.pathname;
+      const index = getIndexForPath(path);
+      if (index !== -1) {
+        _setActiveView({ type: "project", index });
+        setActiveProject(index);
+      } else {
+        _setActiveView({ type: "home" });
+      }
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
   const [showRotateWarning, setShowRotateWarning] = useState(false);
   const currentProject = projectSamples[activeProject];
 
@@ -2507,6 +2569,7 @@ export default function App() {
             project={projectSamples[activeView.index]}
             projectIndex={activeView.index}
             totalProjects={projectSamples.length}
+            scrollY={scrollY}
             onBack={() => {
               setActiveView({ type: "home" });
               window.scrollTo(0, 0);
