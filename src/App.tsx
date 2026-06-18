@@ -373,6 +373,71 @@ export default function App() {
   const serviceTimerRef = useRef<number | null>(null);
   const cursorRef = useRef<HTMLDivElement | null>(null);
 
+  const fadeIntervalRef = useRef<number | null>(null);
+
+  const fadeAudioTo = (targetVolume: number, duration: number, onComplete?: () => void) => {
+    if (!audioRef.current) return;
+    
+    if (fadeIntervalRef.current) {
+      window.clearInterval(fadeIntervalRef.current);
+      fadeIntervalRef.current = null;
+    }
+
+    const audio = audioRef.current;
+    
+    // Ensure the source is playing if we are fading in
+    if (targetVolume > 0 && audio.paused) {
+      audio.volume = 0;
+      audio.play().catch(() => {});
+    }
+
+    const startVolume = audio.volume;
+    const volumeDifference = targetVolume - startVolume;
+    if (volumeDifference === 0) {
+      if (onComplete) onComplete();
+      return;
+    }
+
+    const stepTime = 30; // ms per step
+    const steps = duration / stepTime;
+    const volumeStep = volumeDifference / steps;
+    let currentStep = 0;
+
+    fadeIntervalRef.current = window.setInterval(() => {
+      currentStep++;
+      let newVolume = startVolume + volumeStep * currentStep;
+
+      // Bound checking
+      if (targetVolume > startVolume) {
+        if (newVolume >= targetVolume) {
+          newVolume = targetVolume;
+          window.clearInterval(fadeIntervalRef.current!);
+          fadeIntervalRef.current = null;
+        }
+      } else {
+        if (newVolume <= targetVolume) {
+          newVolume = targetVolume;
+          window.clearInterval(fadeIntervalRef.current!);
+          fadeIntervalRef.current = null;
+        }
+      }
+
+      audio.volume = newVolume;
+
+      if (!fadeIntervalRef.current) {
+        if (onComplete) onComplete();
+      }
+    }, stepTime);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (fadeIntervalRef.current) {
+        window.clearInterval(fadeIntervalRef.current);
+      }
+    };
+  }, []);
+
   useEffect(() => {
     let currentProgress = 0;
     const interval = setInterval(() => {
@@ -428,7 +493,7 @@ export default function App() {
           videoRef.current.play().catch(() => {});
         }
         if (audioRef.current && audioRef.current.paused) {
-          audioRef.current.play().catch(() => {});
+          fadeAudioTo(1, 1000);
         }
       }
     };
@@ -454,9 +519,13 @@ export default function App() {
     }
     if (audioRef.current) {
       if (isSoundOn && hasInteracted) {
-        audioRef.current.play().catch(() => {});
+        fadeAudioTo(1, 1200);
       } else if (!isSoundOn) {
-        audioRef.current.pause();
+        fadeAudioTo(0, 1000, () => {
+          if (audioRef.current) {
+            audioRef.current.pause();
+          }
+        });
       }
     }
   }, [isSoundOn, hasInteracted]);
@@ -736,7 +805,7 @@ export default function App() {
               setIsExiting(true);
               setHasInteracted(true);
               if (isSoundOn && audioRef.current) {
-                audioRef.current.play().catch(() => {});
+                fadeAudioTo(1, 1500);
               }
               setTimeout(() => {
                 setIsFullyLoaded(true);
