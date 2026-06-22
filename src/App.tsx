@@ -79,14 +79,14 @@ const projectSamples = [
     title: "DEADLINER",
     category: "GAME DEVELOPER • SOLO, INDONESIA",
     subtitle: "Classic 2D platformer following Dudung's academic struggle",
-    description: "The Concept: Deadliner is a classic 2D platformer following the chaotic struggle of Dudung, an optimistic and perfectionist college student trying to finish his final thesis. Despite his best efforts, fate loves to test him. Every obstacle is a race against time and exhaustion.",
-    role: "GAME ARTIST, UI DESIGNER",
-    roleDesc: "GAME ARTWORK & INTERFACE DESIGN",
+    description: "This game is the final capstone project for my Microcredential Game Developer graduation requirement under the MBKM (Merdeka Belajar-Kampus Merdeka) program.\n\nComing from a Nuclear Engineering background, this project marks a milestone in my journey to pivot and deepen my passion for visual art. It challenged me to apply my artistic skills to a fast-paced, collaborative tech environment.",
+    role: "GAME ARTIST",
+    roleDesc: "CONCEPT ARTIST & ILLUSTRATOR",
     client: "ICE INSTITUTE X KEMENDIKBUDRISTEK",
     clientDesc: "INSTITUTIONAL PROJECT",
     palette: ["#C9BFDB", "#E6D3E3", "#6A5D7B"],
     paletteNames: ["Soft Lavender", "Orchid Mist", "Deep Amethyst"],
-    image: "https://raw.githubusercontent.com/kupicake/database/HERO-SECTION/3.%20DEADLINER/6.%20lighting.webp",
+    image: "https://github.com/kupicake/database/raw/HERO-SECTION/3.%20DEADLINER/screen%20menu-final.webm",
     foregroundImage: "https://raw.githubusercontent.com/kupicake/database/HERO-SECTION/3.%20DEADLINER/Menungso.webp",
     imageLabel: "[ SAMPLE // GAME_03 ]",
     tools: ["ADOBE PHOTOSHOP", "CLIP STUDIO PAINT", "FIGMA"]
@@ -222,10 +222,55 @@ const getToolIcon = (toolName: string) => {
   return <Box className="w-4 h-4 md:w-4.5 md:h-4.5 stroke-[1.25]" />;
 };
 
+const ALL_PRELOAD_IMAGES = [
+  // Hero and general assets
+  "https://raw.githubusercontent.com/kupicake/database/HERO-SECTION/1.%20PROCRASTINATION/step%204.webp",
+  "https://raw.githubusercontent.com/kupicake/database/HERO-SECTION/1.%20PROCRASTINATION/menungso.webp",
+  "https://raw.githubusercontent.com/kupicake/database/HERO-SECTION/2.%20Scary%20Sweetheart/Cover%20finish_fix.webp",
+  "https://raw.githubusercontent.com/kupicake/database/HERO-SECTION/2.%20Scary%20Sweetheart/Menungso-cover.webp",
+  "https://raw.githubusercontent.com/kupicake/database/HERO-SECTION/3.%20DEADLINER/Menungso.webp",
+  "https://raw.githubusercontent.com/kupicake/database/main/raw%20concept.webp",
+  "https://raw.githubusercontent.com/kupicake/database/main/full%20illustration.webp",
+  "https://raw.githubusercontent.com/kupicake/database/HERO-SECTION/4.%20GALERY/MY%20LIFE%20ONE%20DAY.webp",
+
+  // Procrastination case steps
+  "https://github.com/kupicake/database/raw/HERO-SECTION/1.%20PROCRASTINATION/step%200.webp",
+  "https://github.com/kupicake/database/raw/HERO-SECTION/1.%20PROCRASTINATION/step%201.webp",
+  "https://github.com/kupicake/database/raw/HERO-SECTION/1.%20PROCRASTINATION/step%202.webp",
+  "https://github.com/kupicake/database/raw/HERO-SECTION/1.%20PROCRASTINATION/step%203.webp",
+  "https://github.com/kupicake/database/raw/HERO-SECTION/1.%20PROCRASTINATION/step%204.webp",
+
+  // Sweetheart case scenes
+  "https://raw.githubusercontent.com/kupicake/database/HERO-SECTION/scene/scene1-color.webp",
+  "https://raw.githubusercontent.com/kupicake/database/HERO-SECTION/scene/thumbnail.webp",
+  "https://raw.githubusercontent.com/kupicake/database/HERO-SECTION/scene/scene4-color.webp",
+  "https://raw.githubusercontent.com/kupicake/database/HERO-SECTION/scene/scene2-color.webp",
+  "https://raw.githubusercontent.com/kupicake/database/HERO-SECTION/scene/baris2_003.webp",
+  "https://raw.githubusercontent.com/kupicake/database/HERO-SECTION/scene/thumbnail2.webp",
+  "https://raw.githubusercontent.com/kupicake/database/HERO-SECTION/scene/baris7_001.webp",
+
+  // Sweetheart concept lineup
+  "https://raw.githubusercontent.com/kupicake/database/HERO-SECTION/2.%20Scary%20Sweetheart/DESIGN%20CHARACTER/1_01.webp",
+  "https://raw.githubusercontent.com/kupicake/database/HERO-SECTION/2.%20Scary%20Sweetheart/DESIGN%20CHARACTER/1_02.webp",
+  "https://raw.githubusercontent.com/kupicake/database/HERO-SECTION/2.%20Scary%20Sweetheart/DESIGN%20CHARACTER/1_03.webp",
+  "https://raw.githubusercontent.com/kupicake/database/HERO-SECTION/2.%20Scary%20Sweetheart/DESIGN%20CHARACTER/1_04.webp",
+  "https://raw.githubusercontent.com/kupicake/database/HERO-SECTION/2.%20Scary%20Sweetheart/DESIGN%20CHARACTER/1_05.webp",
+  "https://raw.githubusercontent.com/kupicake/database/HERO-SECTION/2.%20Scary%20Sweetheart/DESIGN%20CHARACTER/1_06.webp",
+
+  // Sweetheart moodboard images
+  "https://raw.githubusercontent.com/kupicake/database/HERO-SECTION/2.%20Scary%20Sweetheart/MOODBOARD/Female%20Lead.webp",
+  "https://raw.githubusercontent.com/kupicake/database/HERO-SECTION/2.%20Scary%20Sweetheart/MOODBOARD/Male%20Lead.webp",
+  "https://raw.githubusercontent.com/kupicake/database/HERO-SECTION/2.%20Scary%20Sweetheart/MOODBOARD/Side%20Character%20-%201.webp",
+  "https://raw.githubusercontent.com/kupicake/database/HERO-SECTION/2.%20Scary%20Sweetheart/MOODBOARD/Side%20Character%20-%202.webp",
+  "https://raw.githubusercontent.com/kupicake/database/HERO-SECTION/2.%20Scary%20Sweetheart/MOODBOARD/Side%20Character%20-%203.webp",
+  "https://raw.githubusercontent.com/kupicake/database/HERO-SECTION/2.%20Scary%20Sweetheart/MOODBOARD/Side%20Character%20-%204.webp"
+];
+
 export default function App() {
-  const [isSoundOn, setIsSoundOn] = useState(true);
+  const [isSoundOn, setIsSoundOn] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
+  const [assetsPreloaded, setAssetsPreloaded] = useState(false);
   // Note: To re-activate the loading screen, set the initial state below to false.
   const [isFullyLoaded, setIsFullyLoaded] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
@@ -500,21 +545,66 @@ export default function App() {
     };
   }, []);
 
+  // Active preloading of all images used in the application
   useEffect(() => {
-    let currentProgress = 0;
+    let loadedCount = 0;
+    const total = ALL_PRELOAD_IMAGES.length;
+    if (total === 0) {
+      setAssetsPreloaded(true);
+      return;
+    }
+
+    let active = true;
+
+    ALL_PRELOAD_IMAGES.forEach((url) => {
+      const img = new Image();
+      img.onload = () => {
+        if (!active) return;
+        loadedCount++;
+        if (loadedCount >= total) {
+          setAssetsPreloaded(true);
+        }
+      };
+      img.onerror = () => {
+        if (!active) return;
+        // Even if some assets fail, we still increment so loading is not blocked.
+        loadedCount++;
+        if (loadedCount >= total) {
+          setAssetsPreloaded(true);
+        }
+      };
+      img.src = url;
+    });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
     const interval = setInterval(() => {
-      currentProgress += Math.floor(Math.random() * 4) + 1;
-      if (currentProgress >= 100) {
-        currentProgress = 100;
-        setLoadingProgress(currentProgress);
-        clearInterval(interval);
-      } else {
-        setLoadingProgress(currentProgress);
-      }
+      setLoadingProgress((prev) => {
+        if (prev >= 98) {
+          if (assetsPreloaded) {
+            clearInterval(interval);
+            return 100;
+          }
+          return 98;
+        }
+        const next = prev + Math.floor(Math.random() * 4) + 1;
+        if (next >= 98) {
+          if (assetsPreloaded) {
+            clearInterval(interval);
+            return 100;
+          }
+          return 98;
+        }
+        return next;
+      });
     }, 40);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [assetsPreloaded]);
 
   useEffect(() => {
     serviceTimerRef.current = window.setInterval(() => {
@@ -1510,7 +1600,7 @@ export default function App() {
                         <img
                           src={service.src}
                           referrerPolicy="no-referrer"
-                          loading="lazy"
+                          loading="eager"
                           className={`w-full h-full object-cover object-bottom transition-transform duration-700 ease-out select-none pointer-events-none ${isServiceZoomed ? "scale-[1.12]" : "scale-100 group-hover/asset:scale-105"}`}
                           alt={service.title}
                         />
@@ -1728,7 +1818,7 @@ export default function App() {
                       src="https://raw.githubusercontent.com/kupicake/database/HERO-SECTION/1.%20PROCRASTINATION/step%204.webp"
                       alt="Art Frame 1"
                       referrerPolicy="no-referrer"
-                      loading="lazy"
+                      loading="eager"
                       className="w-full h-full object-cover transition-transform duration-[1200ms]"
                     />
                     <div className="absolute inset-0 bg-[#161616]/40 backdrop-blur-[0.5px]" />
@@ -1854,7 +1944,7 @@ export default function App() {
                         src="https://raw.githubusercontent.com/kupicake/database/HERO-SECTION/2.%20Scary%20Sweetheart/Cover%20finish_fix.webp"
                         alt="Art Frame 2"
                         referrerPolicy="no-referrer"
-                        loading="lazy"
+                        loading="eager"
                         className="w-full h-full object-cover transition-transform duration-[1200ms]"
                       />
                     </div>
@@ -1888,7 +1978,7 @@ export default function App() {
                         src="https://raw.githubusercontent.com/kupicake/database/HERO-SECTION/2.%20Scary%20Sweetheart/Menungso-cover.webp"
                         alt="Art Frame 3"
                         referrerPolicy="no-referrer"
-                        loading="lazy"
+                        loading="eager"
                         className="w-full h-full object-cover transition-transform duration-[1200ms]"
                       />
                     </div>
@@ -1930,7 +2020,7 @@ export default function App() {
                       src="https://raw.githubusercontent.com/kupicake/database/HERO-SECTION/3.%20DEADLINER/6.%20lighting.webp"
                       alt="Art Frame 4"
                       referrerPolicy="no-referrer"
-                      loading="lazy"
+                      loading="eager"
                       className="w-full h-full object-cover transition-transform duration-[1200ms]"
                     />
                   </div>
@@ -2004,28 +2094,54 @@ export default function App() {
                       backgroundSize: "16px 16px",
                     }}
                   />
-                  <img
-                    src={currentProject.image}
-                    referrerPolicy="no-referrer"
-                    loading="lazy"
-                    alt={`${currentProject.title} Showcase`}
-                    key={activeProject}
-                    className={`w-full h-full object-cover transition-all duration-[1200ms] ease-out animate-project-fade ${
-                      activeProject === 3 ? "blur-none" : "blur-[6px]"
-                    } ${
-                      activeProject === 0
-                        ? "scale-[1.75]"
-                        : activeProject === 2
-                        ? "scale-[2.0]"
-                        : "scale-100"
-                    } ${
-                      activeProject === 0
-                        ? "object-right origin-right translate-x-[15%]"
-                        : activeProject === 2
-                        ? "translate-x-[5%]"
-                        : "object-center"
-                    }`}
-                  />
+                  {currentProject.image.endsWith(".webm") ? (
+                    <video
+                      src={currentProject.image}
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      key={activeProject}
+                      className={`w-full h-full object-cover transition-all duration-[1200ms] ease-out animate-project-fade ${
+                        activeProject === 3 ? "blur-none" : "blur-[6px]"
+                      } ${
+                        activeProject === 0
+                          ? "scale-[1.75]"
+                          : activeProject === 2
+                          ? "scale-[2.0]"
+                          : "scale-100"
+                      } ${
+                        activeProject === 0
+                          ? "object-right origin-right translate-x-[15%]"
+                          : activeProject === 2
+                          ? "translate-x-[5%]"
+                          : "object-center"
+                      }`}
+                    />
+                  ) : (
+                    <img
+                      src={currentProject.image}
+                      referrerPolicy="no-referrer"
+                      loading="eager"
+                      alt={`${currentProject.title} Showcase`}
+                      key={activeProject}
+                      className={`w-full h-full object-cover transition-all duration-[1200ms] ease-out animate-project-fade ${
+                        activeProject === 3 ? "blur-none" : "blur-[6px]"
+                      } ${
+                        activeProject === 0
+                          ? "scale-[1.75]"
+                          : activeProject === 2
+                          ? "scale-[2.0]"
+                          : "scale-100"
+                      } ${
+                        activeProject === 0
+                          ? "object-right origin-right translate-x-[15%]"
+                          : activeProject === 2
+                          ? "translate-x-[5%]"
+                          : "object-center"
+                      }`}
+                    />
+                  )}
                 </div>
 
                 {/* Overlapping foreground character image */}
@@ -2034,7 +2150,7 @@ export default function App() {
                       <img
                         src={currentProject.foregroundImage}
                         referrerPolicy="no-referrer"
-                        loading="lazy"
+                        loading="eager"
                         alt={`${currentProject.title} Character Foreground`}
                         key={`fg-${activeProject}`}
                        className={`h-full w-auto object-contain object-bottom animate-project-fade transition-all duration-[1400ms] ease-[cubic-bezier(0.25,1,0.5,1)] origin-bottom ${
@@ -2215,27 +2331,52 @@ export default function App() {
                         backgroundSize: "16px 16px",
                       }}
                     />
-                    <img
-                      src={project.image}
-                      referrerPolicy="no-referrer"
-                      loading="lazy"
-                      alt={`${project.title} Showcase`}
-                      className={`w-full h-full object-cover transition-all duration-[500ms] ${
-                        idx === 3 ? "blur-none" : "blur-[6px]"
-                      } ${
-                        idx === 0
-                          ? "scale-[1.75]"
-                          : idx === 2
-                          ? "scale-[2.0]"
-                          : "scale-100"
-                      } ${
-                        idx === 0
-                          ? "object-right origin-right translate-x-[15%]"
-                          : idx === 2
-                          ? "translate-x-[5%]"
-                          : "object-center"
-                      }`}
-                    />
+                    {project.image.endsWith(".webm") ? (
+                      <video
+                        src={project.image}
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        className={`w-full h-full object-cover transition-all duration-[500ms] ${
+                          idx === 3 ? "blur-none" : "blur-[6px]"
+                        } ${
+                          idx === 0
+                            ? "scale-[1.75]"
+                            : idx === 2
+                            ? "scale-[2.0]"
+                            : "scale-100"
+                        } ${
+                          idx === 0
+                            ? "object-right origin-right translate-x-[15%]"
+                            : idx === 2
+                            ? "translate-x-[5%]"
+                            : "object-center"
+                        }`}
+                      />
+                    ) : (
+                      <img
+                        src={project.image}
+                        referrerPolicy="no-referrer"
+                        loading="eager"
+                        alt={`${project.title} Showcase`}
+                        className={`w-full h-full object-cover transition-all duration-[500ms] ${
+                          idx === 3 ? "blur-none" : "blur-[6px]"
+                        } ${
+                          idx === 0
+                            ? "scale-[1.75]"
+                            : idx === 2
+                            ? "scale-[2.0]"
+                            : "scale-100"
+                        } ${
+                          idx === 0
+                            ? "object-right origin-right translate-x-[15%]"
+                            : idx === 2
+                            ? "translate-x-[5%]"
+                            : "object-center"
+                        }`}
+                      />
+                    )}
                   </div>
 
                   {/* Overlapping foreground character image on mobile */}
@@ -2244,7 +2385,7 @@ export default function App() {
                       <img
                         src={project.foregroundImage}
                         referrerPolicy="no-referrer"
-                        loading="lazy"
+                        loading="eager"
                         alt={`${project.title} Character Foreground Mobile`}
                         className={`h-full w-auto object-contain object-bottom origin-bottom ${
                           idx === 0 ? "scale-[0.85] translate-x-0" : idx === 2 ? "scale-[0.85] translate-x-[20%]" : "scale-[1.05]"
