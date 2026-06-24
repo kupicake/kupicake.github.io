@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import { motion, useScroll, useTransform } from "motion/react";
 import { 
   ArrowLeft, 
@@ -28,6 +28,7 @@ export default function AboutPage({ onBack }: AboutPageProps) {
     offset: ["start end", "end start"]
   });
   const y = useTransform(scrollYProgress, [0, 1], ["-15%", "15%"]);
+  const [copied, setCopied] = useState(false);
 
   return (
     <div className="min-h-screen bg-[#faf9f5] font-sans text-[#1a1a1a] relative overflow-x-hidden selection:bg-[#F05C3B] selection:text-white">
@@ -224,9 +225,9 @@ export default function AboutPage({ onBack }: AboutPageProps) {
           {/* Section 3: Tools & Technical Apparatus */}
           <div className="py-16 border-b border-[#e5e5e2]">
             <span className="font-mono text-[9px] md:text-[10px] tracking-[0.4em] text-[#F05C3B] uppercase font-bold block mb-4">
-              03 // DIGITAL TOOL APPARATUS
+              03 // DIGITAL TOOL
             </span>
-            <h2 className="font-sans text-lg md:text-xl font-normal text-[#1a1a1a] tracking-tight mb-8">
+            <h2 className="font-sans text-xl md:text-2xl lg:text-3xl font-light text-[#1a1a1a] tracking-tight mb-8">
               Softwares & Technologies I Employ
             </h2>
 
@@ -238,10 +239,10 @@ export default function AboutPage({ onBack }: AboutPageProps) {
                 { category: "Visual Systems", tools: ["Composition & Layout", "Color Theory", "Storyboarding"] }
               ].map((group) => (
                 <div key={group.category} className="border-t border-[#e5e5e2] pt-4">
-                  <h3 className="font-mono text-[9px] tracking-wider text-[#737370] uppercase font-bold mb-3">
+                  <h3 className="font-mono text-[10px] md:text-xs tracking-wider text-[#737370] uppercase font-bold mb-3">
                     {group.category}
                   </h3>
-                  <ul className="space-y-1.5 font-sans text-[11px] text-[#1a1a1a]">
+                  <ul className="space-y-1.5 font-sans text-sm md:text-base text-[#1a1a1a] font-light">
                     {group.tools.map((t) => (
                       <li key={t} className="flex items-center gap-2">
                         <span className="w-1 h-1 bg-[#F05C3B]" />
@@ -254,29 +255,114 @@ export default function AboutPage({ onBack }: AboutPageProps) {
             </div>
           </div>
 
-          {/* Section 4: Call to action / Footer elements of About page */}
-          <div className="pt-16 text-left w-full flex flex-col items-start">
-            <Heart className="w-6 h-6 text-[#F05C3B] animate-pulse mb-6" />
-            <h3 className="font-sans text-lg md:text-xl font-normal tracking-tight mb-4 text-left">
-              Let's create something meaningful together.
-            </h3>
-            <p className="font-sans text-xs text-[#5a5957] leading-relaxed mb-8 text-left">
-              Whether you want to commission a story, request custom illustrations, develop custom concept designs, or collaborate on animation sequences — let's forge a connection!
-            </p>
+          {/* Section 4: Contact Style from Main Page */}
+          <div className="pt-16 text-left w-full">
+            <span className="font-mono text-[9px] md:text-[10px] tracking-[0.4em] text-[#F05C3B] uppercase font-bold block mb-8">
+              04 // GET IN TOUCH
+            </span>
 
-            <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center justify-end w-full sm:w-auto sm:self-end sm:ml-auto">
-              <a
-                href="mailto:kupicake@gmail.com"
-                className="font-mono text-[10px] uppercase tracking-widest font-bold bg-[#1a1a1a] text-white hover:bg-[#F05C3B] px-8 py-3.5 rounded-full transition-all duration-300 text-center"
-              >
-                Direct Inquiry
-              </a>
-              <button
-                onClick={onBack}
-                className="font-mono text-[10px] uppercase tracking-widest font-bold border border-[#1a1a1a]/15 hover:border-[#1a1a1a] hover:bg-black/5 px-8 py-3.5 rounded-full transition-all duration-300 bg-transparent cursor-pointer text-center"
-              >
-                Back to Portfolio
-              </button>
+            <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-[1px] bg-[#E5E2DC] border-t border-b border-[#E5E2DC] -mx-6 md:-mx-12 lg:-mx-24 w-[calc(100%+48px)] md:w-[calc(100%+96px)] lg:w-[calc(100%+192px)] max-w-none">
+              {/* Box 1: Status & Info */}
+              <div className="bg-[#faf9f5] hover:bg-white transition-colors duration-500 p-8 md:p-12 lg:p-16 flex flex-col justify-between min-h-[300px] lg:min-h-[380px]">
+                <div>
+                  <span className="text-[#8a8a85] font-mono text-[10px] md:text-xs uppercase tracking-wider block mb-4">
+                    01 // AVAILABILITY
+                  </span>
+                  <h3 className="text-[#1a1a1a] font-normal text-2xl md:text-3xl lg:text-[40px] leading-tight mb-6 font-sans">
+                    Open for new projects and remote collaborations.
+                  </h3>
+                </div>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 mt-8">
+                  {/* Left: Location & Status */}
+                  <div className="flex flex-col gap-1 font-mono text-[10px] md:text-xs text-[#5a5957]">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#10b981]" />
+                      <span className="text-[#10b981] font-bold tracking-widest uppercase">
+                        YOGYAKARTA, INDONESIA
+                      </span>
+                    </div>
+                    <span className="text-[#737370]">
+                      [ Worldwide delivery ]
+                    </span>
+                  </div>
+
+                  {/* Right: Capabilities */}
+                  <div className="font-sans text-xs md:text-[13px] lg:text-sm text-[#737370] leading-relaxed text-left sm:text-right font-light">
+                    <p>Branding & Visual Identity</p>
+                    <p>Narrative & Character Design</p>
+                    <p>Motion Graphics & 2D Movement</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Box 2: Actions & Details */}
+              <div className="bg-[#faf9f5] hover:bg-white transition-colors duration-500 p-8 md:p-12 lg:p-16 flex flex-col justify-between min-h-[300px] lg:min-h-[380px] group/contact-box relative overflow-hidden">
+                <div>
+                  <span className="text-[#8a8a85] font-mono text-[10px] md:text-xs uppercase tracking-wider block mb-4">
+                    02 // DIRECT INQUIRY
+                  </span>
+                  <div className="flex flex-col gap-2 font-sans">
+                    <div className="flex flex-col sm:flex-row sm:items-baseline gap-2">
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText("riskirw17@gmail.com");
+                          setCopied(true);
+                          setTimeout(() => setCopied(false), 2000);
+                        }}
+                        className="text-[#1a1a1a] hover:text-[#F05C3B] font-normal text-2xl md:text-3xl lg:text-[40px] leading-tight text-left block break-all transition-colors duration-500 bg-transparent border-none p-0 cursor-pointer select-all font-sans"
+                      >
+                        riskirw17@gmail.com
+                      </button>
+                      {copied && (
+                        <span className="text-xs font-mono text-[#F05C3B] uppercase tracking-wider animate-pulse whitespace-nowrap">
+                          [ copied! ]
+                        </span>
+                      )}
+                    </div>
+                    
+                    <a
+                      href="https://wa.me/6289673731449"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[#737370] hover:text-[#F05C3B] font-normal text-xl md:text-2xl lg:text-[28px] leading-tight block transition-colors duration-500 font-sans"
+                    >
+                      +62 896 7373 1449
+                    </a>
+                  </div>
+                </div>
+
+                <div className="flex flex-row justify-between items-center w-full mt-8 flex-wrap gap-4 z-10 relative">
+                  {/* Social Links on Left */}
+                  <div className="flex items-center gap-3">
+                    <a
+                      href="https://instagram.com/kupicake"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-10 h-10 rounded-full border border-[#e5e5e2] flex items-center justify-center text-[#5a5957] hover:text-[#F05C3B] hover:border-[#F05C3B] transition-all duration-300"
+                      aria-label="Visit Instagram Profile"
+                    >
+                      <Instagram className="w-4 h-4" />
+                    </a>
+                    <a
+                      href="https://linkedin.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-10 h-10 rounded-full border border-[#e5e5e2] flex items-center justify-center text-[#5a5957] hover:text-[#F05C3B] hover:border-[#F05C3B] transition-all duration-300"
+                      aria-label="Visit LinkedIn Profile"
+                    >
+                      <Linkedin className="w-4 h-4" />
+                    </a>
+                  </div>
+
+                  {/* Back to Portfolio on Right */}
+                  <button
+                    onClick={onBack}
+                    className="font-mono text-[10px] uppercase tracking-widest font-bold border border-[#1a1a1a]/15 hover:border-[#1a1a1a] hover:bg-black/5 px-8 py-3.5 rounded-full transition-all duration-300 bg-transparent cursor-pointer text-center"
+                  >
+                    Back to Portfolio
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>

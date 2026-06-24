@@ -2806,13 +2806,13 @@ export default function App() {
                   <div className="flex flex-col sm:flex-row sm:items-baseline gap-2">
                     <button
                       onClick={() => {
-                        navigator.clipboard.writeText("kupicake@gmail.com");
+                        navigator.clipboard.writeText("riskirw17@gmail.com");
                         setCopied(true);
                         setTimeout(() => setCopied(false), 2000);
                       }}
                       className="text-[#1a1a1a] hover:text-[#F05C3B] font-normal text-2xl md:text-3xl lg:text-[40px] leading-tight text-left block break-all transition-colors duration-500 bg-transparent border-none p-0 cursor-pointer select-all"
                     >
-                      kupicake@gmail.com
+                      riskirw17@gmail.com
                     </button>
                     {copied && (
                       <span className="text-xs font-mono text-[#F05C3B] uppercase tracking-wider animate-pulse whitespace-nowrap">
