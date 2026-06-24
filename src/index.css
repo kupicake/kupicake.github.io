@@ -66,3 +66,13 @@ html, body {
   width: 32px;
   height: 32px;
 }
+
+/* Custom color filters for black webp outline badges inside navigation grid */
+.vgen-icon-nav-idle {
+  filter: brightness(0) saturate(100%) invert(48%) sepia(4%) saturate(145%) hue-rotate(42deg) brightness(96%) contrast(83%);
+}
+
+.vgen-icon-nav-hover {
+  filter: brightness(0) saturate(100%) invert(53%) sepia(61%) saturate(3025%) hue-rotate(338deg) brightness(96%) contrast(97%);
+}
+

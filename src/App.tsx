@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, Suspense, lazy } from "react";
 import Lenis from "lenis";
 
 const ProjectCasePage = lazy(() => import("./components/ProjectCasePage"));
+const AboutPage = lazy(() => import("./components/AboutPage"));
 import {
   Dribbble,
   Instagram,
@@ -22,6 +23,7 @@ import {
   BookOpen,
   Video,
   MapPin,
+  MessageCircle,
 } from "lucide-react";
 
 const getPathForIndex = (index: number) => {
@@ -46,7 +48,7 @@ const projectSamples = [
     category: "BRAND IDENTITY • YOGYAKARTA, INDONESIA",
     subtitle: "Brand identity, creative direction and dynamic illustration art",
     description: "o\tAbout the Project This project is dedicated to myself and my family, who have always supported me. It serves as a personal showcase, bridging emotional storytelling with motion art to express my identity as a creator.\n\no\tThe Concept The main illustration features a tired young man escaping into his imagination—doing anything but working. This reflects my own creative process: a journey of overthinking and self-doubt, which ultimately leads to rediscovery. When I finally create, I find myself again, shaping the world I want to live in.",
-    role: "WEB DESIGNER, ILLUSTRATOR, ANIMATOR",
+    role: "CONCEPT ARTIST, ILLUSTRATOR, ANIMATOR",
     roleDesc: "CORE ROLES",
     client: "SELF PROJECT",
     clientDesc: "PERSONAL EXPLORATION",
@@ -297,6 +299,48 @@ export default function App() {
       return () => clearTimeout(timer);
     }
   }, [sampleTouched]);
+
+  // --- MAGNETIC CURSOR GRAVITATIONAL PULL EFFECT ---
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (typeof window !== "undefined" && window.innerWidth < 1024) return;
+
+      const elements = document.querySelectorAll(".magnetic-element");
+      const mouseX = e.clientX;
+      const mouseY = e.clientY;
+
+      elements.forEach((el) => {
+        const htmlEl = el as HTMLElement;
+        const rect = htmlEl.getBoundingClientRect();
+        const elX = rect.left + rect.width / 2;
+        const elY = rect.top + rect.height / 2;
+
+        const dx = mouseX - elX;
+        const dy = mouseY - elY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        const threshold = parseInt(htmlEl.getAttribute("data-magnetic-radius") || "50", 10);
+        const strength = parseFloat(htmlEl.getAttribute("data-magnetic-strength") || "0.3");
+
+        if (distance < threshold) {
+          const ratio = 1 - distance / threshold;
+          const pullX = dx * strength * ratio;
+          const pullY = dy * strength * ratio;
+
+          htmlEl.style.transform = `translate(${pullX}px, ${pullY}px)`;
+          htmlEl.style.transition = "transform 0.15s cubic-bezier(0.25, 1, 0.5, 1)";
+        } else {
+          htmlEl.style.transform = "translate(0px, 0px)";
+          htmlEl.style.transition = "transform 0.3s cubic-bezier(0.25, 1, 0.5, 1)";
+        }
+      });
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+    };
+  }, []);
   const bentoContainerRef = useRef<HTMLDivElement | null>(null);
   const moreWorkRef = useRef<HTMLDivElement | null>(null);
 
@@ -391,8 +435,12 @@ export default function App() {
     return { height: "75%" };
   };
 
-  const [activeView, _setActiveView] = useState<{ type: "home" } | { type: "project"; index: number }>(() => {
+  const [activeView, _setActiveView] = useState<{ type: "home" } | { type: "project"; index: number } | { type: "about" }>(() => {
     if (typeof window !== "undefined") {
+      const path = window.location.pathname.toLowerCase().replace(/\/$/, "");
+      if (path.includes("/about-me") || path.includes("/about")) {
+        return { type: "about" };
+      }
       const index = getIndexForPath(window.location.pathname);
       if (index !== -1) {
         return { type: "project", index };
@@ -401,7 +449,7 @@ export default function App() {
     return { type: "home" };
   });
 
-  const setActiveView = (view: { type: "home" } | { type: "project"; index: number } | ((prev: any) => any)) => {
+  const setActiveView = (view: { type: "home" } | { type: "project"; index: number } | { type: "about" } | ((prev: any) => any)) => {
     const nextView = typeof view === "function" ? view(activeView) : view;
     _setActiveView(nextView);
     if (typeof window !== "undefined") {
@@ -411,6 +459,10 @@ export default function App() {
           window.history.pushState({ type: "project", index: nextView.index }, "", path);
         }
         setActiveProject(nextView.index);
+      } else if (nextView.type === "about") {
+        if (window.location.pathname !== "/about") {
+          window.history.pushState({ type: "about" }, "", "/about");
+        }
       } else {
         if (window.location.pathname !== "/") {
           window.history.pushState({ type: "home" }, "", "/");
@@ -421,13 +473,17 @@ export default function App() {
 
   useEffect(() => {
     const handlePopState = () => {
-      const path = window.location.pathname;
-      const index = getIndexForPath(path);
-      if (index !== -1) {
-        _setActiveView({ type: "project", index });
-        setActiveProject(index);
+      const path = window.location.pathname.toLowerCase().replace(/\/$/, "");
+      if (path.includes("/about-me") || path.includes("/about")) {
+        _setActiveView({ type: "about" });
       } else {
-        _setActiveView({ type: "home" });
+        const index = getIndexForPath(window.location.pathname);
+        if (index !== -1) {
+          _setActiveView({ type: "project", index });
+          setActiveProject(index);
+        } else {
+          _setActiveView({ type: "home" });
+        }
       }
     };
     window.addEventListener("popstate", handlePopState);
@@ -1028,19 +1084,32 @@ export default function App() {
               onClick={(e) => {
                 e.preventDefault();
                 setIsMenuOpen(false);
+                if (lenisRef.current) {
+                  lenisRef.current.start();
+                }
+                document.body.style.overflow = "";
+
                 if (activeView.type !== "home") {
                   setActiveView({ type: "home" });
                   setTimeout(() => {
                     const element = document.getElementById(item.id);
                     if (element) {
                       lenisRef.current?.scrollTo(element, { immediate: true });
+                    } else {
+                      const el = document.getElementById(item.id);
+                      el?.scrollIntoView({ behavior: "smooth" });
                     }
-                  }, 100);
+                  }, 150);
                 } else {
-                  const element = document.getElementById(item.id);
-                  if (element) {
-                    lenisRef.current?.scrollTo(element);
-                  }
+                  setTimeout(() => {
+                    const element = document.getElementById(item.id);
+                    if (element) {
+                      lenisRef.current?.scrollTo(element);
+                    } else {
+                      const el = document.getElementById(item.id);
+                      el?.scrollIntoView({ behavior: "smooth" });
+                    }
+                  }, 50);
                 }
               }}
               className="group relative flex-grow flex items-center justify-between px-8 lg:px-12 hover:bg-[#F05C3B]/5 transition-all duration-500 overflow-hidden"
@@ -1065,18 +1134,40 @@ export default function App() {
 
         {/* Footer social nodes & copy indicator */}
         <div className="border-t border-[#e5e5e2] bg-[#fbfbfa] flex-shrink-0">
-          <div className="grid grid-cols-3 divide-x divide-[#e5e5e2] text-center border-b border-[#e5e5e2]">
+          <div className="grid grid-cols-4 divide-x divide-[#e5e5e2] text-center border-b border-[#e5e5e2]">
             {[
-              { Icon: Instagram, href: "#", label: "Instagram" },
-              { Icon: Dribbble, href: "#", label: "Dribbble" },
-              { Icon: Linkedin, href: "#", label: "LinkedIn" },
-            ].map(({ Icon, href, label }) => (
+              { Icon: Instagram, href: "https://www.instagram.com/kupicake_/", label: "Instagram" },
+              { 
+                imgSrc: "https://raw.githubusercontent.com/kupicake/database/HERO-SECTION/LOGO%20KUPICAKE/VGen%20Badge%20-%20outline.webp", 
+                href: "https://vgen.co/kupicake_", 
+                label: "VGen" 
+              },
+              { Icon: Linkedin, href: "https://www.linkedin.com/in/riskirw17", label: "LinkedIn" },
+              { Icon: MessageCircle, href: "https://wa.me/6289673731449", label: "WhatsApp" },
+            ].map(({ Icon, imgSrc, href, label }) => (
               <a
                 key={label}
                 href={href}
-                className="py-6 lg:py-8 flex flex-col items-center justify-center gap-2 hover:bg-[#F05C3B]/5 hover:text-[#F05C3B] text-[#737370] transition-all duration-500"
+                className="py-6 lg:py-8 flex flex-col items-center justify-center gap-2 hover:bg-[#F05C3B]/5 hover:text-[#F05C3B] text-[#737370] transition-all duration-500 group"
               >
-                <Icon className="w-4 h-4 lg:w-5 lg:h-5" />
+                {imgSrc ? (
+                  <div className="relative w-4 h-4 lg:w-5 lg:h-5 scale-[1.03]">
+                    <img 
+                      src={imgSrc} 
+                      alt={label} 
+                      className="absolute inset-0 w-full h-full object-contain vgen-icon-nav-idle opacity-100 group-hover:opacity-0 transition-opacity duration-500 ease-in-out"
+                      referrerPolicy="no-referrer"
+                    />
+                    <img 
+                      src={imgSrc} 
+                      alt={label} 
+                      className="absolute inset-0 w-full h-full object-contain vgen-icon-nav-hover opacity-0 group-hover:opacity-100 transition-opacity duration-500 ease-in-out"
+                      referrerPolicy="no-referrer"
+                    />
+                  </div>
+                ) : (
+                  Icon && <Icon className="w-4 h-4 lg:w-5 lg:h-5" />
+                )}
                 <span className="font-mono text-[8px] lg:text-[10px] uppercase tracking-widest">
                   {label}
                 </span>
@@ -1085,7 +1176,7 @@ export default function App() {
           </div>
 
           <div className="py-4 px-6 lg:px-10 flex justify-between items-center font-mono text-[8px] lg:text-[10px] text-[#8a8a85]">
-            <span>DESIGN x DEV</span>
+            <span>ART x MOTION</span>
             <span>KUPI CAKE © 2026</span>
           </div>
         </div>
@@ -1105,7 +1196,9 @@ export default function App() {
                 lenisRef.current?.scrollTo(0, { immediate: true });
               }
             }}
-            className="cursor-pointer group flex flex-col items-center justify-center"
+            className="cursor-pointer group flex flex-col items-center justify-center magnetic-element"
+            data-magnetic-radius="50"
+            data-magnetic-strength="0.35"
           >
             <div
               className={`w-10 h-10 lg:w-[60px] lg:h-[60px] rounded-full flex items-center justify-center overflow-hidden transition-all duration-500 border bg-white ${
@@ -1126,14 +1219,16 @@ export default function App() {
 
         {/* Top Right - Nav */}
         <div
-          className={`absolute top-0 right-0 ${headerBoxClass} flex items-center justify-center bg-transparent overflow-hidden transition-all duration-300 ${isScrolled || isMenuOpen ? "pointer-events-auto" : "pointer-events-none"}`}
+          className={`absolute top-0 right-0 ${headerBoxClass} flex items-center justify-center bg-transparent overflow-hidden transition-all duration-300 ${isScrolled || isMenuOpen || activeView.type !== "home" ? "pointer-events-auto" : "pointer-events-none"}`}
         >
           <div
-            className={`transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${isScrolled || isMenuOpen ? "scale-100 opacity-100" : "scale-50 opacity-0 pointer-events-none"}`}
+            className={`transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${isScrolled || isMenuOpen || activeView.type !== "home" ? "scale-100 opacity-100" : "scale-50 opacity-0 pointer-events-none"}`}
           >
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className={`${isAtHero ? "text-white mix-blend-difference" : "text-[#1a1a1a]"} hover:text-[#F05C3B] p-2 flex items-center justify-center transition-colors`}
+              className={`${isAtHero ? "text-white mix-blend-difference" : "text-[#1a1a1a]"} hover:text-[#F05C3B] p-2 flex items-center justify-center transition-colors magnetic-element`}
+              data-magnetic-radius="45"
+              data-magnetic-strength="0.4"
             >
               {isMenuOpen ? (
                 <X className="w-5 h-5 lg:w-6 lg:h-6" />
@@ -1168,7 +1263,9 @@ export default function App() {
         >
           <div
             onClick={() => setIsSoundOn(!isSoundOn)}
-            className="-rotate-90 origin-center cursor-pointer group grid relative select-none"
+            className="-rotate-90 origin-center cursor-pointer group grid relative select-none magnetic-element"
+            data-magnetic-radius="50"
+            data-magnetic-strength="0.35"
           >
             {/* Back Layer (Ambient Light for Hero background) */}
             <div className="col-start-1 row-start-1 flex flex-col items-center gap-1 lg:gap-1.5 whitespace-nowrap text-[8px] lg:text-[10px] font-bold tracking-[0.1em] lg:tracking-[0.15em] transition-opacity duration-300 mix-blend-difference text-white">
@@ -1310,20 +1407,37 @@ export default function App() {
                 href={`#${item.id}`}
                 onClick={(e) => {
                   e.preventDefault();
-                  const element = document.getElementById(item.id);
-                  if (element) {
-                    lenisRef.current?.scrollTo(element);
+                  if (activeView.type !== "home") {
+                    setActiveView({ type: "home" });
+                    setTimeout(() => {
+                      const element = document.getElementById(item.id);
+                      if (element) {
+                        if (lenisRef.current) {
+                          lenisRef.current.scrollTo(element, { immediate: true });
+                        } else {
+                          element.scrollIntoView({ behavior: "smooth" });
+                        }
+                      }
+                    }, 150);
+                  } else {
+                    const element = document.getElementById(item.id);
+                    if (element) {
+                      if (lenisRef.current) {
+                        lenisRef.current.scrollTo(element);
+                      } else {
+                        element.scrollIntoView({ behavior: "smooth" });
+                      }
+                    }
                   }
                 }}
-                className={`text-[8px] lg:text-[10px] tracking-[0.1em] lg:tracking-[0.15em] font-bold uppercase transition-all flex items-center gap-1.5 lg:gap-2 group ${
+                className={`text-[8px] lg:text-[10px] tracking-[0.1em] lg:tracking-[0.15em] font-bold uppercase transition-all flex items-center gap-1.5 lg:gap-2 group magnetic-element ${
                   isAtHero ? "text-white mix-blend-difference" : "text-[#1a1a1a]"
                 } ${
                   idx === 0 ? "opacity-100" : "opacity-65 hover:opacity-100"
                 }`}
+                data-magnetic-radius="50"
+                data-magnetic-strength="0.3"
               >
-                <div
-                  className={`h-[1px] bg-current transition-all ${idx === 0 ? "w-2 lg:w-3" : "w-0 group-hover:w-2 lg:group-hover:w-3"}`}
-                />
                 <span>{item.name}</span>
               </a>
             ))}
@@ -1333,21 +1447,38 @@ export default function App() {
         {/* Center Left - Social Media */}
         <div className="relative z-10 border-r border-[#e5e5e2]/40 flex flex-col items-center justify-end pb-4 lg:pb-8 gap-8 lg:gap-10 bg-transparent">
           {[
-            { Icon: Dribbble, label: "Dribbble" },
-            { Icon: Instagram, label: "Instagram" },
-            { Icon: Play, label: "Play", className: "fill-current" },
-            { Icon: Linkedin, label: "LinkedIn" },
-          ].map(({ Icon, label, className }) => (
+            { 
+              imgSrc: "https://raw.githubusercontent.com/kupicake/database/HERO-SECTION/LOGO%20KUPICAKE/VGen%20Badge%20-%20outline.webp", 
+              label: "VGen", 
+              href: "https://vgen.co/kupicake_" 
+            },
+            { Icon: Instagram, label: "Instagram", href: "https://www.instagram.com/kupicake_/" },
+            { Icon: Linkedin, label: "LinkedIn", href: "https://www.linkedin.com/in/riskirw17" },
+            { Icon: MessageCircle, label: "WhatsApp", href: "https://wa.me/6289673731449" },
+          ].map(({ Icon, imgSrc, label, href }) => (
             <a
               key={label}
-              href="#"
+              href={href}
               aria-label={label}
-              className="text-white mix-blend-difference opacity-70 hover:opacity-100 transition-all hover:scale-110 flex items-center justify-center p-1"
+              className="text-white mix-blend-difference opacity-70 hover:opacity-100 transition-all hover:scale-110 flex items-center justify-center p-1 magnetic-element"
+              data-magnetic-radius="40"
+              data-magnetic-strength="0.4"
             >
-              <Icon
-                className={`w-4 h-4 lg:w-5 lg:h-5 ${className || ""}`}
-                strokeWidth={2}
-              />
+              {imgSrc ? (
+                <img
+                  src={imgSrc}
+                  alt={label}
+                  className="w-4 h-4 lg:w-5 lg:h-5 object-contain invert scale-[1.03]"
+                  referrerPolicy="no-referrer"
+                />
+              ) : (
+                Icon && (
+                  <Icon
+                    className="w-4 h-4 lg:w-5 lg:h-5"
+                    strokeWidth={2}
+                  />
+                )
+              )}
             </a>
           ))}
         </div>
@@ -1443,35 +1574,27 @@ export default function App() {
             })}
           </p>
 
-          <div className="mt-10 md:mt-12 flex justify-start">
-            <a
-              href="#contact"
-              className="group inline-flex items-center gap-5 px-6 py-2.5 rounded-full border border-[#161616]/20 hover:border-[#F05C3B] hover:text-[#F05C3B] transition-all duration-500 ease-out text-xs md:text-sm tracking-wide font-normal text-[#161616] bg-transparent"
+          <div className="mt-10 md:mt-12 w-full flex justify-end">
+            <button
+              onClick={() => {
+                setActiveView({ type: "about" });
+                window.scrollTo(0, 0);
+                lenisRef.current?.scrollTo(0, { immediate: true });
+              }}
+              className="group flex items-center justify-start h-12 md:h-14 rounded-full border border-[#161616]/20 hover:border-[#F05C3B] hover:text-[#F05C3B] bg-transparent transition-all duration-500 ease-out cursor-pointer overflow-hidden w-12 hover:w-48 md:w-14 md:hover:w-56"
+              aria-label="More about me"
             >
-              <span>More about me</span>
-              <svg
-                width="14"
-                height="10"
-                viewBox="0 0 14 10"
-                fill="none"
-                className="transition-transform duration-500 ease-out group-hover:translate-x-1.5"
-              >
-                <path
-                  d="M1,8 L1,5 L13,5"
-                  stroke="currentColor"
-                  strokeWidth="1"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M10,1.5 L13,5 L10,8.5"
-                  stroke="currentColor"
-                  strokeWidth="1"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </a>
+              <div className="flex items-center w-full h-full">
+                {/* Arrow Icon in its own perfect container, centered when idle */}
+                <div className="w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center flex-shrink-0 transition-transform duration-500 ease-out group-hover:rotate-45">
+                  <ArrowUpRight className="w-5 h-5 text-current" />
+                </div>
+                {/* Revealed text on hover/touch */}
+                <span className="opacity-0 group-hover:opacity-100 transition-all duration-500 ease-out font-mono text-[10px] md:text-xs uppercase tracking-widest font-bold whitespace-nowrap text-[#161616] group-hover:text-[#F05C3B] pr-5 pl-1 -translate-x-2 group-hover:translate-x-0">
+                  more about me
+                </span>
+              </div>
+            </button>
           </div>
         </div>
 
@@ -1515,9 +1638,9 @@ export default function App() {
               {
                 type: "img",
                 src: "https://raw.githubusercontent.com/kupicake/database/main/raw%20concept.webp",
-                category: "Branding & Visual Identity",
+                category: "Concept Art & Layouts",
                 title: "Art Concept",
-                desc: "Transforming abstract ideas into structured blueprints, from clean vector logo design to initial layout concepts.",
+                desc: "Transforming abstract ideas into structured visual blueprints, from conceptual environments to character layouts.",
                 num: "01",
               },
               {
@@ -2641,55 +2764,123 @@ export default function App() {
 
           <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-[1px] bg-[#E5E2DC] border-t border-b border-[#E5E2DC]">
             {/* Box 1: Status & Info */}
-            <div className="bg-white p-8 md:p-12 lg:p-16 flex flex-col justify-between min-h-[300px] lg:min-h-[380px]">
+            <div className="bg-[#faf9f5] hover:bg-white transition-colors duration-500 p-8 md:p-12 lg:p-16 flex flex-col justify-between min-h-[300px] lg:min-h-[380px]">
               <div>
                 <span className="text-[#8a8a85] font-mono text-[10px] md:text-xs uppercase tracking-wider block mb-4">
-                  01 // Availability
+                  01 // AVAILABILITY
                 </span>
                 <h3 className="text-[#1a1a1a] font-normal text-2xl md:text-3xl lg:text-[40px] leading-tight mb-6">
                   Open for new projects and remote collaborations.
                 </h3>
               </div>
-              <div className="flex flex-col gap-2 font-mono text-xs text-[#5a5957] mt-8">
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-[#34d399] animate-pulse" />
-                  <span className="text-[#34d399] uppercase tracking-widest font-bold text-[10px] md:text-xs">
-                    Available Now
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 mt-8">
+                {/* Left: Location & Status */}
+                <div className="flex flex-col gap-1 font-mono text-[10px] md:text-xs text-[#5a5957]">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#10b981]" />
+                    <span className="text-[#10b981] font-bold tracking-widest uppercase">
+                      YOGYAKARTA, INDONESIA
+                    </span>
+                  </div>
+                  <span className="text-[#737370]">
+                    [ Worldwide delivery ]
                   </span>
                 </div>
-                <span className="text-[10px] md:text-xs">
-                  [ Jakarta, Indonesia // Worldwide delivery ]
-                </span>
+
+                {/* Right: Capabilities */}
+                <div className="font-sans text-xs md:text-[13px] lg:text-sm text-[#737370] leading-relaxed text-left sm:text-right">
+                  <p>Branding & Visual Identity</p>
+                  <p>Narrative & Character Design</p>
+                  <p>Motion Graphics & 2D Movement</p>
+                </div>
               </div>
             </div>
 
             {/* Box 2: Actions & Details */}
-            <div className="bg-white p-8 md:p-12 lg:p-16 flex flex-col justify-between min-h-[300px] lg:min-h-[380px] group/contact-box relative overflow-hidden">
-              <div className="absolute inset-0 bg-[#F05C3B]/5 opacity-0 group-hover/contact-box:opacity-100 transition-opacity duration-[1000ms] pointer-events-none" />
-
+            <div className="bg-[#faf9f5] hover:bg-white transition-colors duration-500 p-8 md:p-12 lg:p-16 flex flex-col justify-between min-h-[300px] lg:min-h-[380px] group/contact-box relative overflow-hidden">
               <div>
                 <span className="text-[#8a8a85] font-mono text-[10px] md:text-xs uppercase tracking-wider block mb-4">
-                  02 // Direct Inquiry
+                  02 // DIRECT INQUIRY
                 </span>
-                <a
-                  href="mailto:tsbulan1@gmail.com"
-                  className="text-[#1a1a1a] hover:text-[#F05C3B] font-normal text-2xl md:text-3xl lg:text-[40px] leading-tight block break-all transition-colors duration-500"
-                >
-                  tsbulan1@gmail.com
-                </a>
+                <div className="flex flex-col gap-2">
+                  <div className="flex flex-col sm:flex-row sm:items-baseline gap-2">
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText("kupicake@gmail.com");
+                        setCopied(true);
+                        setTimeout(() => setCopied(false), 2000);
+                      }}
+                      className="text-[#1a1a1a] hover:text-[#F05C3B] font-normal text-2xl md:text-3xl lg:text-[40px] leading-tight text-left block break-all transition-colors duration-500 bg-transparent border-none p-0 cursor-pointer select-all"
+                    >
+                      kupicake@gmail.com
+                    </button>
+                    {copied && (
+                      <span className="text-xs font-mono text-[#F05C3B] uppercase tracking-wider animate-pulse whitespace-nowrap">
+                        [ copied! ]
+                      </span>
+                    )}
+                  </div>
+                  
+                  <a
+                    href="https://wa.me/6289673731449"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#737370] hover:text-[#F05C3B] font-normal text-xl md:text-2xl lg:text-[28px] leading-tight block transition-colors duration-500"
+                  >
+                    +62 896 7373 1449
+                  </a>
+                </div>
               </div>
 
-              <div className="relative z-10 pt-8" id="copy-container">
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText("tsbulan1@gmail.com");
-                    setCopied(true);
-                    setTimeout(() => setCopied(false), 2000);
-                  }}
-                  className="text-[9px] md:text-xs uppercase tracking-widest font-bold border border-[#1a1a1a]/25 px-5 py-2.5 hover:border-[#F05C3B] hover:text-[#F05C3B] transition-colors rounded-full flex items-center gap-2 cursor-pointer bg-transparent text-[#1a1a1a]"
-                >
-                  {copied ? "[ Copied! ]" : "[ Copy to Clipboard ]"}
-                </button>
+              <div className="flex flex-row justify-between items-center w-full mt-8 flex-wrap gap-4 z-10 relative">
+                {/* Social Links on Left */}
+                <div className="flex items-center gap-3">
+                  {[
+                    {
+                      Icon: Instagram,
+                      href: "https://www.instagram.com/kupicake_/",
+                      label: "Instagram",
+                    },
+                    {
+                      imgSrc: "https://raw.githubusercontent.com/kupicake/database/HERO-SECTION/LOGO%20KUPICAKE/VGen%20Badge%20-%20outline.webp",
+                      href: "https://vgen.co/kupicake_",
+                      label: "VGen",
+                    },
+                    {
+                      Icon: Linkedin,
+                      href: "https://www.linkedin.com/in/riskirw17",
+                      label: "LinkedIn",
+                    },
+                  ].map(({ Icon, imgSrc, href, label }) => (
+                    <a
+                      key={label}
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={label}
+                      className="w-10 h-10 md:w-11 md:h-11 rounded-full border border-[#e5e2dc] bg-transparent hover:bg-[#F05C3B]/5 hover:border-[#F05C3B] hover:text-[#F05C3B] text-[#737370] transition-all duration-300 flex items-center justify-center group"
+                    >
+                      {imgSrc ? (
+                        <div className="relative w-4 h-4 md:w-5 md:h-5">
+                          <img 
+                            src={imgSrc} 
+                            alt={label} 
+                            className="absolute inset-0 w-full h-full object-contain vgen-icon-nav-idle opacity-100 group-hover:opacity-0 transition-opacity duration-300"
+                            referrerPolicy="no-referrer"
+                          />
+                          <img 
+                            src={imgSrc} 
+                            alt={label} 
+                            className="absolute inset-0 w-full h-full object-contain vgen-icon-nav-hover opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                            referrerPolicy="no-referrer"
+                          />
+                        </div>
+                      ) : (
+                        Icon && <Icon className="w-4 h-4 md:w-5 md:h-5 transition-colors duration-300" />
+                      )}
+                    </a>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -2699,6 +2890,21 @@ export default function App() {
         <div className="bg-[#faf9f5] col-start-3 col-end-4 row-start-1" />
       </div>
         </>
+      ) : activeView.type === "about" ? (
+        <Suspense fallback={
+          <div className="min-h-screen bg-[#faf9f5] flex flex-col items-center justify-center font-sans font-light text-xs text-[#8c8275] tracking-widest uppercase select-none">
+            <div className="w-8 h-8 rounded-full border border-[#E5E2DC] border-t-[#F05C3B] animate-spin mb-4" />
+            Loading Profile...
+          </div>
+        }>
+          <AboutPage
+            onBack={() => {
+              setActiveView({ type: "home" });
+              window.scrollTo(0, 0);
+              lenisRef.current?.scrollTo(0, { immediate: true });
+            }}
+          />
+        </Suspense>
       ) : (
         <Suspense fallback={
           <div className="min-h-screen bg-[#faf9f5] flex flex-col items-center justify-center font-sans font-light text-xs text-[#8c8275] tracking-widest uppercase select-none">
