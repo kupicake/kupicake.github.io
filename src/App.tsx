@@ -24,6 +24,7 @@ import {
   Video,
   MapPin,
   MessageCircle,
+  Copy,
 } from "lucide-react";
 
 const getPathForIndex = (index: number) => {
@@ -522,6 +523,8 @@ export default function App() {
   };
 
   const [copied, setCopied] = useState(false);
+  const [emailCopied, setEmailCopied] = useState(false);
+  const [phoneCopied, setPhoneCopied] = useState(false);
   const [copiedColor, setCopiedColor] = useState<string | null>(null);
 
   const handleCopyColor = (hex: string) => {
@@ -2802,33 +2805,64 @@ export default function App() {
                 <span className="text-[#8a8a85] font-mono text-[10px] md:text-xs uppercase tracking-wider block mb-4">
                   02 // DIRECT INQUIRY
                 </span>
-                <div className="flex flex-col gap-2">
-                  <div className="flex flex-col sm:flex-row sm:items-baseline gap-2">
-                    <button
-                      onClick={() => {
-                        navigator.clipboard.writeText("riskirw17@gmail.com");
-                        setCopied(true);
-                        setTimeout(() => setCopied(false), 2000);
-                      }}
-                      className="text-[#1a1a1a] hover:text-[#F05C3B] font-normal text-2xl md:text-3xl lg:text-[40px] leading-tight text-left block break-all transition-colors duration-500 bg-transparent border-none p-0 cursor-pointer select-all"
+                <div className="flex flex-col gap-4">
+                  <div className="group/email flex items-center gap-3 relative min-h-[48px]">
+                    <a
+                      href="mailto:riskirw17@gmail.com"
+                      className="text-[#1a1a1a] hover:text-[#F05C3B] font-normal text-2xl md:text-3xl lg:text-[40px] leading-tight text-left block break-all transition-colors duration-500 font-sans"
                     >
                       riskirw17@gmail.com
+                    </a>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        navigator.clipboard.writeText("riskirw17@gmail.com");
+                        setEmailCopied(true);
+                        setTimeout(() => setEmailCopied(false), 2000);
+                      }}
+                      className="p-2 rounded-full hover:bg-[#F05C3B]/10 text-[#737370] hover:text-[#F05C3B] cursor-pointer opacity-0 group-hover/email:opacity-100 focus:opacity-100 transition-all duration-300 flex items-center justify-center shrink-0 border border-[#E5E2DC]"
+                      title="Copy email to clipboard"
+                    >
+                      {emailCopied ? (
+                        <span className="text-xs font-mono text-[#F05C3B] uppercase tracking-wider animate-pulse whitespace-nowrap px-1">
+                          copied!
+                        </span>
+                      ) : (
+                        <Copy className="w-4 h-4" />
+                      )}
                     </button>
-                    {copied && (
-                      <span className="text-xs font-mono text-[#F05C3B] uppercase tracking-wider animate-pulse whitespace-nowrap">
-                        [ copied! ]
-                      </span>
-                    )}
                   </div>
                   
-                  <a
-                    href="https://wa.me/6289673731449"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[#737370] hover:text-[#F05C3B] font-normal text-xl md:text-2xl lg:text-[28px] leading-tight block transition-colors duration-500"
-                  >
-                    +62 896 7373 1449
-                  </a>
+                  <div className="group/phone flex items-center gap-3 relative min-h-[36px]">
+                    <a
+                      href="https://wa.me/6289673731449"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[#737370] hover:text-[#F05C3B] font-normal text-xl md:text-2xl lg:text-[28px] leading-tight block transition-colors duration-500 font-sans"
+                    >
+                      +62 896 7373 1449
+                    </a>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        navigator.clipboard.writeText("+6289673731449");
+                        setPhoneCopied(true);
+                        setTimeout(() => setPhoneCopied(false), 2000);
+                      }}
+                      className="p-1.5 rounded-full hover:bg-[#F05C3B]/10 text-[#737370] hover:text-[#F05C3B] cursor-pointer opacity-0 group-hover/phone:opacity-100 focus:opacity-100 transition-all duration-300 flex items-center justify-center shrink-0 border border-[#E5E2DC]"
+                      title="Copy phone number to clipboard"
+                    >
+                      {phoneCopied ? (
+                        <span className="text-[10px] font-mono text-[#F05C3B] uppercase tracking-wider animate-pulse whitespace-nowrap px-1">
+                          copied!
+                        </span>
+                      ) : (
+                        <Copy className="w-3.5 h-3.5" />
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
 
