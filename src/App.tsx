@@ -3,6 +3,7 @@ import Lenis from "lenis";
 
 const ProjectCasePage = lazy(() => import("./components/ProjectCasePage"));
 const AboutPage = lazy(() => import("./components/AboutPage"));
+const GalleryPage = lazy(() => import("./components/GalleryPage"));
 import {
   Dribbble,
   Instagram,
@@ -280,6 +281,9 @@ export default function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrollY, setScrollY] = useState(0);
   const [windowHeight, setWindowHeight] = useState(0);
+  const isContactUnlockedRef = useRef(false);
+  const hasSnappedRef = useRef(false);
+  const snapTimeRef = useRef(0);
   const [activeService, setActiveService] = useState(0);
   const [isServiceZoomed, setIsServiceZoomed] = useState(false);
   const [activeProject, setActiveProject] = useState(() => {
@@ -436,11 +440,14 @@ export default function App() {
     return { height: "75%" };
   };
 
-  const [activeView, _setActiveView] = useState<{ type: "home" } | { type: "project"; index: number } | { type: "about" }>(() => {
+  const [activeView, _setActiveView] = useState<{ type: "home" } | { type: "project"; index: number } | { type: "about" } | { type: "gallery" }>(() => {
     if (typeof window !== "undefined") {
       const path = window.location.pathname.toLowerCase().replace(/\/$/, "");
       if (path.includes("/about-me") || path.includes("/about")) {
         return { type: "about" };
+      }
+      if (path.includes("/gallery") || path.includes("/more-work")) {
+        return { type: "gallery" };
       }
       const index = getIndexForPath(window.location.pathname);
       if (index !== -1) {
@@ -450,7 +457,7 @@ export default function App() {
     return { type: "home" };
   });
 
-  const setActiveView = (view: { type: "home" } | { type: "project"; index: number } | { type: "about" } | ((prev: any) => any)) => {
+  const setActiveView = (view: { type: "home" } | { type: "project"; index: number } | { type: "about" } | { type: "gallery" } | ((prev: any) => any)) => {
     const nextView = typeof view === "function" ? view(activeView) : view;
     _setActiveView(nextView);
     if (typeof window !== "undefined") {
@@ -463,6 +470,10 @@ export default function App() {
       } else if (nextView.type === "about") {
         if (window.location.pathname !== "/about") {
           window.history.pushState({ type: "about" }, "", "/about");
+        }
+      } else if (nextView.type === "gallery") {
+        if (window.location.pathname !== "/gallery") {
+          window.history.pushState({ type: "gallery" }, "", "/gallery");
         }
       } else {
         if (window.location.pathname !== "/") {
@@ -477,6 +488,8 @@ export default function App() {
       const path = window.location.pathname.toLowerCase().replace(/\/$/, "");
       if (path.includes("/about-me") || path.includes("/about")) {
         _setActiveView({ type: "about" });
+      } else if (path.includes("/gallery") || path.includes("/more-work")) {
+        _setActiveView({ type: "gallery" });
       } else {
         const index = getIndexForPath(window.location.pathname);
         if (index !== -1) {
@@ -757,7 +770,11 @@ export default function App() {
     const rafId = requestAnimationFrame(raf);
 
     setWindowHeight(window.innerHeight);
-    const handleScroll = () => setScrollY(window.scrollY);
+
+    const handleScroll = () => {
+      setScrollY(window.scrollY);
+    };
+
     const handleResize = () => setWindowHeight(window.innerHeight);
 
     window.addEventListener("scroll", handleScroll, { passive: true });
@@ -1006,8 +1023,30 @@ export default function App() {
     moreWorkParallaxY = (scrollY - centerOffset) * 0.12;
   }
 
+  let contactParallaxY = 0;
+  let contactOpacity = 1;
+  let isContactVisible = true;
+  if (typeof document !== "undefined" && windowHeight > 0) {
+    const scrollHeight = document.documentElement.scrollHeight;
+    const maxScroll = scrollHeight - windowHeight;
+    if (maxScroll > 0) {
+      const revealRange = windowHeight + 100;
+      const distanceToBottom = maxScroll - scrollY;
+      if (distanceToBottom < revealRange) {
+        isContactVisible = true;
+        const pct = Math.max(0, Math.min(1, distanceToBottom / revealRange));
+        contactParallaxY = pct * 100; // slides up smoothly from 100px to 0px
+        contactOpacity = 1 - pct;     // fades in from 0 to 1
+      } else {
+        isContactVisible = false;
+        contactParallaxY = 100;
+        contactOpacity = 0;
+      }
+    }
+  }
+
   return (
-    <main className="bg-[#E5E2DC] flex flex-col gap-[1px] w-full min-h-screen font-sans">
+    <main className="bg-[#FAF9F5] flex flex-col w-full min-h-screen font-sans relative overflow-x-hidden">
       {/* LOADING SCREEN */}
       {!isFullyLoaded && (
         <div
@@ -1055,13 +1094,13 @@ export default function App() {
 
       {/* MENU BACKDROP */}
       <div
-        className={`fixed inset-0 bg-black/30 backdrop-blur-sm z-30 transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${isMenuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
+        className={`fixed inset-0 bg-black/30 backdrop-blur-sm z-[1000] transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${isMenuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
         onClick={() => setIsMenuOpen(false)}
       />
 
       {/* GRID-STYLE NAV OVERLAY */}
       <div
-        className={`fixed top-0 right-0 h-screen w-full sm:w-[400px] lg:w-[460px] bg-white border-l border-[#e5e5e2] z-40 flex flex-col justify-between transition-transform duration-[700ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${isMenuOpen ? "translate-x-0" : "translate-x-full"}`}
+        className={`fixed top-0 right-0 h-screen w-full sm:w-[400px] lg:w-[460px] bg-white border-l border-[#e5e5e2] z-[1001] flex flex-col justify-between transition-transform duration-[700ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${isMenuOpen ? "translate-x-0" : "translate-x-full"}`}
       >
         {/* Header grid matching background template grid increments */}
         <div className="grid grid-cols-[1fr_55px] lg:grid-cols-[1fr_85px] h-[55px] lg:h-[85px] border-b border-[#e5e5e2] flex-shrink-0">
@@ -1077,9 +1116,10 @@ export default function App() {
         {/* Dynamic Nav Links with fine vertical border division */}
         <div className="flex-grow flex flex-col justify-center divide-y divide-[#e5e5e2]">
           {[
-            { name: "About", num: "01", id: "about" },
-            { name: "Work", num: "02", id: "work" },
-            { name: "Contact", num: "03", id: "contact" },
+            { name: "Home", num: "01", id: "home" },
+            { name: "About", num: "02", id: "about" },
+            { name: "Work", num: "03", id: "work" },
+            { name: "Contact", num: "04", id: "contact" },
           ].map((item, idx) => (
             <a
               key={item.name}
@@ -1092,27 +1132,36 @@ export default function App() {
                 }
                 document.body.style.overflow = "";
 
-                if (activeView.type !== "home") {
+                if (item.id === "home") {
                   setActiveView({ type: "home" });
                   setTimeout(() => {
-                    const element = document.getElementById(item.id);
-                    if (element) {
-                      lenisRef.current?.scrollTo(element, { immediate: true });
-                    } else {
-                      const el = document.getElementById(item.id);
-                      el?.scrollIntoView({ behavior: "smooth" });
-                    }
-                  }, 150);
-                } else {
+                    window.scrollTo(0, 0);
+                    lenisRef.current?.scrollTo(0, { immediate: true });
+                  }, 100);
+                } else if (item.id === "about") {
+                  setActiveView({ type: "about" });
                   setTimeout(() => {
-                    const element = document.getElementById(item.id);
+                    window.scrollTo(0, 0);
+                    lenisRef.current?.scrollTo(0, { immediate: true });
+                  }, 100);
+                } else if (item.id === "work") {
+                  setActiveView({ type: "gallery" });
+                  setTimeout(() => {
+                    window.scrollTo(0, 0);
+                    lenisRef.current?.scrollTo(0, { immediate: true });
+                  }, 100);
+                } else if (item.id === "contact") {
+                  isContactUnlockedRef.current = true;
+                  setTimeout(() => {
+                    const element = document.getElementById("contact");
                     if (element) {
-                      lenisRef.current?.scrollTo(element);
-                    } else {
-                      const el = document.getElementById(item.id);
-                      el?.scrollIntoView({ behavior: "smooth" });
+                      if (lenisRef.current) {
+                        lenisRef.current.scrollTo(element);
+                      } else {
+                        element.scrollIntoView({ behavior: "smooth" });
+                      }
                     }
-                  }, 50);
+                  }, 100);
                 }
               }}
               className="group relative flex-grow flex items-center justify-between px-8 lg:px-12 hover:bg-[#F05C3B]/5 transition-all duration-500 overflow-hidden"
@@ -1187,7 +1236,7 @@ export default function App() {
 
       {/* FIXED FLOATING UI */}
       <div
-        className={`fixed inset-0 pointer-events-none z-50 transition-colors duration-500`}
+        className={`fixed inset-0 pointer-events-none z-[1002] transition-colors duration-500`}
       >
         {/* Top Left - Logo */}
         <div className={`absolute top-0 left-0 ${headerBoxClass} flex items-center justify-center pointer-events-auto bg-transparent transition-all duration-300`}>
@@ -1248,7 +1297,7 @@ export default function App() {
           style={
             {
               "--sp": `${
-                typeof window !== "undefined"
+                activeView.type === "home" && typeof window !== "undefined"
                   ? (() => {
                       const isDesktop = window.innerWidth >= 1024;
                       const baseOffset = isDesktop ? 117 : 71;
@@ -1259,7 +1308,7 @@ export default function App() {
                         Math.max(0, (effectiveScroll / buttonSize) * 100),
                       );
                     })()
-                  : 0
+                  : 100
               }%`,
             } as React.CSSProperties
           }
@@ -1270,39 +1319,41 @@ export default function App() {
             data-magnetic-radius="50"
             data-magnetic-strength="0.35"
           >
-            {/* Back Layer (Ambient Light for Hero background) */}
-            <div className="col-start-1 row-start-1 flex flex-col items-center gap-1 lg:gap-1.5 whitespace-nowrap text-[8px] lg:text-[10px] font-bold tracking-[0.1em] lg:tracking-[0.15em] transition-opacity duration-300 mix-blend-difference text-white">
-              <div className="flex items-center gap-1.5">
-                <span className="opacity-70 group-hover:opacity-100 transition-opacity">
-                  SOUND
-                </span>
-                <div className="grid overflow-hidden">
-                  <span
-                    className={`col-start-1 row-start-1 transition-all duration-500 ease-out ${isSoundOn ? "-translate-y-[150%] opacity-0" : "translate-y-0 opacity-100"} opacity-90 group-hover:opacity-100`}
-                  >
-                    OFF
+            {/* Back Layer (Ambient Light for Hero background) - Only on home view */}
+            {activeView.type === "home" && (
+              <div className="col-start-1 row-start-1 flex flex-col items-center gap-1 lg:gap-1.5 whitespace-nowrap text-[8px] lg:text-[10px] font-bold tracking-[0.1em] lg:tracking-[0.15em] transition-opacity duration-300 mix-blend-difference text-white">
+                <div className="flex items-center gap-1.5">
+                  <span className="opacity-70 group-hover:opacity-100 transition-opacity">
+                    SOUND
                   </span>
-                  <span
-                    className={`col-start-1 row-start-1 transition-all duration-500 ease-out ${isSoundOn ? "translate-y-0 opacity-100" : "translate-y-[150%] opacity-0"} opacity-90 group-hover:opacity-100`}
-                  >
-                    ON
-                  </span>
+                  <div className="grid overflow-hidden">
+                    <span
+                      className={`col-start-1 row-start-1 transition-all duration-500 ease-out ${isSoundOn ? "-translate-y-[150%] opacity-0" : "translate-y-0 opacity-100"} opacity-90 group-hover:opacity-100`}
+                    >
+                      OFF
+                    </span>
+                    <span
+                      className={`col-start-1 row-start-1 transition-all duration-500 ease-out ${isSoundOn ? "translate-y-0 opacity-100" : "translate-y-[150%] opacity-0"} opacity-90 group-hover:opacity-100`}
+                    >
+                      ON
+                    </span>
+                  </div>
+                </div>
+                
+                {/* Dynamic scroll progress loading bar (Hero style) */}
+                <div className="w-10 lg:w-12 h-[1.5px] bg-white/30 rounded-full relative overflow-hidden">
+                  <div 
+                    className="absolute inset-y-0 left-0 bg-white transition-all duration-300 ease-out"
+                    style={{ width: `${pageScrollProgress}%` }}
+                  />
                 </div>
               </div>
-              
-              {/* Dynamic scroll progress loading bar (Hero style) */}
-              <div className="w-10 lg:w-12 h-[1.5px] bg-white/30 rounded-full relative overflow-hidden">
-                <div 
-                  className="absolute inset-y-0 left-0 bg-white transition-all duration-300 ease-out"
-                  style={{ width: `${pageScrollProgress}%` }}
-                />
-              </div>
-            </div>
+            )}
 
-            {/* Front Layer using Clip Path (High Contrast Dark/Orange for Content background) */}
+            {/* Front Layer (High Contrast Dark/Orange for Content background) */}
             <div
               className="col-start-1 row-start-1 flex flex-col items-center gap-1 lg:gap-1.5 whitespace-nowrap text-[8px] lg:text-[10px] font-bold tracking-[0.1em] lg:tracking-[0.15em]"
-              style={{ clipPath: "inset(0 calc(100% - var(--sp)) 0 0)" }}
+              style={activeView.type === "home" ? { clipPath: "inset(0 calc(100% - var(--sp)) 0 0)" } : undefined}
             >
               <div className="flex items-center gap-1.5">
                 <span className="text-[#8c8275] group-hover:text-[#F05C3B] transition-colors">
@@ -1358,8 +1409,9 @@ export default function App() {
 
       {activeView.type === "home" ? (
         <>
-          {/* HERO SECTION */}
-          <div className="relative flex-none h-[100svh] w-full bg-[#faf9f5] grid grid-cols-[55px_1fr_55px] lg:grid-cols-[85px_1fr_85px] grid-rows-[55px_1fr_55px] lg:grid-rows-[85px_1fr_85px] overflow-hidden">
+          <div className="relative z-10 flex flex-col gap-[1px] bg-[#E5E2DC] w-full">
+            {/* HERO SECTION */}
+          <div className="relative z-10 flex-none h-[100svh] w-full bg-[#faf9f5] grid grid-cols-[55px_1fr_55px] lg:grid-cols-[85px_1fr_85px] grid-rows-[55px_1fr_55px] lg:grid-rows-[85px_1fr_85px] overflow-hidden">
         {/* Full-bleed background video with parallax effect */}
         <div className="absolute inset-0 z-0 overflow-hidden w-full h-full pointer-events-none select-none">
           <video
@@ -1410,27 +1462,30 @@ export default function App() {
                 href={`#${item.id}`}
                 onClick={(e) => {
                   e.preventDefault();
-                  if (activeView.type !== "home") {
-                    setActiveView({ type: "home" });
+                  if (item.id === "about") {
+                    setActiveView({ type: "about" });
                     setTimeout(() => {
-                      const element = document.getElementById(item.id);
+                      window.scrollTo(0, 0);
+                      lenisRef.current?.scrollTo(0, { immediate: true });
+                    }, 100);
+                  } else if (item.id === "work") {
+                    setActiveView({ type: "gallery" });
+                    setTimeout(() => {
+                      window.scrollTo(0, 0);
+                      lenisRef.current?.scrollTo(0, { immediate: true });
+                    }, 100);
+                  } else if (item.id === "contact") {
+                    isContactUnlockedRef.current = true;
+                    setTimeout(() => {
+                      const element = document.getElementById("contact");
                       if (element) {
                         if (lenisRef.current) {
-                          lenisRef.current.scrollTo(element, { immediate: true });
+                          lenisRef.current.scrollTo(element);
                         } else {
                           element.scrollIntoView({ behavior: "smooth" });
                         }
                       }
-                    }, 150);
-                  } else {
-                    const element = document.getElementById(item.id);
-                    if (element) {
-                      if (lenisRef.current) {
-                        lenisRef.current.scrollTo(element);
-                      } else {
-                        element.scrollIntoView({ behavior: "smooth" });
-                      }
-                    }
+                    }, 100);
                   }
                 }}
                 className={`text-[8px] lg:text-[10px] tracking-[0.1em] lg:tracking-[0.15em] font-bold uppercase transition-all flex items-center gap-1.5 lg:gap-2 group magnetic-element ${
@@ -1525,7 +1580,7 @@ export default function App() {
       {/* ABOUT SECTION */}
       <div
         id="about"
-        className="w-full bg-[#E5E2DC] grid grid-cols-[55px_1fr_55px] lg:grid-cols-[85px_1fr_85px] auto-rows-auto gap-[1px] scroll-mt-[55px] lg:scroll-mt-[85px]"
+        className="relative z-10 w-full bg-[#E5E2DC] grid grid-cols-[55px_1fr_55px] lg:grid-cols-[85px_1fr_85px] auto-rows-auto gap-[1px] scroll-mt-[55px] lg:scroll-mt-[85px]"
       >
         {/* Left Grid Margin */}
         <div className="bg-[#faf9f5] col-start-1 col-end-2 row-start-1" />
@@ -1606,7 +1661,7 @@ export default function App() {
       </div>
 
       {/* --- Section 3: What I Do (Bento Grid) --- */}
-      <div className="lg:h-screen lg:min-h-[850px] grid lg:grid-cols-[85px_1fr_85px] grid-cols-[55px_1fr_55px] gap-[1px] bg-[#E5E2DC] overflow-hidden">
+      <div className="relative z-10 lg:h-screen lg:min-h-[850px] grid lg:grid-cols-[85px_1fr_85px] grid-cols-[55px_1fr_55px] gap-[1px] bg-[#E5E2DC] overflow-hidden">
         {/* Left Grid Margin */}
         <div className="bg-[#FAF9F5] col-start-1 col-end-2 row-start-1" />
 
@@ -1888,7 +1943,7 @@ export default function App() {
       {/* --- Section 4: My Work --- */}
       <div
         id="work"
-        className="h-auto lg:h-screen lg:min-h-[850px] grid lg:grid-cols-[85px_1fr_85px] grid-cols-[55px_1fr_55px] gap-[1px] bg-[#E5E2DC] overflow-visible lg:overflow-hidden scroll-mt-[55px] lg:scroll-mt-[85px]"
+        className="relative z-10 h-auto lg:h-screen lg:min-h-[850px] grid lg:grid-cols-[85px_1fr_85px] grid-cols-[55px_1fr_55px] gap-[1px] bg-[#E5E2DC] overflow-visible lg:overflow-hidden scroll-mt-[55px] lg:scroll-mt-[85px]"
       >
         {/* Left Grid Margin */}
         <div className="bg-[#FAF9F5] col-start-1 col-end-2 row-start-1" />
@@ -2651,7 +2706,7 @@ export default function App() {
       <div
         id="more-work-section"
         ref={moreWorkRef}
-        className="relative w-full overflow-hidden bg-[#FAF9F5] grid lg:grid-cols-[85px_1fr_85px] grid-cols-[55px_1fr_55px] gap-[1px] border-b border-[#E5E2DC]"
+        className="relative z-10 w-full overflow-hidden bg-[#FAF9F5] grid lg:grid-cols-[85px_1fr_85px] grid-cols-[55px_1fr_55px] gap-[1px] border-b border-[#E5E2DC]"
       >
         {/* Full-bleed Parallax Background Layer across left, center, and right margins */}
         <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none select-none">
@@ -2688,15 +2743,9 @@ export default function App() {
             <button
               id="more-work-btn"
               onClick={() => {
-                const msg = document.getElementById("more-work-status-msg");
-                if (msg) {
-                  msg.classList.remove("opacity-0", "translate-y-1");
-                  msg.classList.add("opacity-100", "translate-y-0");
-                  setTimeout(() => {
-                    msg.classList.remove("opacity-100", "translate-y-0");
-                    msg.classList.add("opacity-0", "translate-y-1");
-                  }, 3000);
-                }
+                setActiveView({ type: "gallery" });
+                window.scrollTo(0, 0);
+                lenisRef.current?.scrollTo(0, { immediate: true });
               }}
               className="group/btn inline-flex items-center gap-6 px-10 py-4 md:py-5 rounded-full border border-[#161616]/15 hover:border-[#F05C3B] text-xs md:text-sm tracking-[0.25em] uppercase font-bold text-[#161616] hover:text-[#F05C3B] transition-all duration-500 ease-out cursor-pointer bg-[#FAF9F5]/80 hover:bg-[#FAF9F5] hover:shadow-xs relative"
             >
@@ -2738,36 +2787,88 @@ export default function App() {
         <div className="col-start-3 col-end-4 py-20 md:py-28 relative z-10" />
       </div>
 
+          </div>
+
       {/* --- Section 5: Contact (Grid Style) --- */}
       <div
         id="contact"
-        className="w-full bg-[#E5E2DC] grid lg:grid-cols-[85px_1fr_85px] grid-cols-[55px_1fr_55px] auto-rows-auto gap-[1px] scroll-mt-[55px] lg:scroll-mt-[85px]"
+        className="group/contact w-full min-h-screen lg:h-screen bg-[#E5E2DC] grid lg:grid-cols-[85px_1fr_85px] grid-cols-[55px_1fr_55px] auto-rows-auto gap-[1px] scroll-mt-[55px] lg:scroll-mt-[85px] sticky bottom-0 z-0"
+        style={{
+          transform: `translateY(${contactParallaxY}px)`,
+          opacity: contactOpacity,
+          visibility: isContactVisible ? "visible" : "hidden",
+          willChange: "transform, opacity",
+        }}
       >
         {/* Left Grid Margin */}
-        <div className="bg-[#faf9f5] col-start-1 col-end-2 row-start-1" />
+        <div className="bg-[#faf9f5] col-start-1 col-end-2 row-start-1 transition-colors duration-500" />
 
         {/* Center Content */}
-        <div className="bg-[#faf9f5] col-start-2 col-end-3 row-start-1 pt-32 lg:pt-48 pb-32 lg:pb-48 flex flex-col justify-start items-start w-full">
-          <h2
-            ref={contactTitleRef}
-            className="px-6 md:px-12 lg:px-24 font-bold text-xs md:text-sm tracking-[0.4em] md:tracking-[0.6em] uppercase mb-16 md:mb-24 lg:mb-32"
-          >
-            <span
-              style={{
-                backgroundImage: `linear-gradient(to right, #161616 ${Math.min(100, contactTitleProgress * 100)}%, #b5b5b0 ${Math.min(100, contactTitleProgress * 100)}%)`,
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-                color: "transparent",
-              }}
+        <div className="bg-[#faf9f5] col-start-2 col-end-3 row-start-1 pt-16 lg:pt-20 pb-0 flex flex-col justify-between items-start w-full min-h-screen lg:h-screen transition-colors duration-500">
+          {/* Section Header */}
+          <div className="w-full flex justify-between items-baseline px-6 md:px-12 lg:px-16 mb-4 xl:mb-6 shrink-0">
+            <h2
+              ref={contactTitleRef}
+              className="font-bold text-[10px] md:text-xs tracking-[0.4em] md:tracking-[0.6em] uppercase"
             >
-              GET IN TOUCH
+              <span
+                style={{
+                  backgroundImage: `linear-gradient(to right, #161616 ${Math.min(100, contactTitleProgress * 100)}%, #b5b5b0 ${Math.min(100, contactTitleProgress * 100)}%)`,
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                  color: "transparent",
+                }}
+              >
+                GET IN TOUCH
+              </span>
+            </h2>
+            <span className="font-mono text-[9px] text-[#F05C3B]/60 tracking-wider font-light uppercase hidden md:inline">
+              COLLABORATION &bull; DIRECT CHANNELS
             </span>
-          </h2>
+          </div>
 
-          <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-[1px] bg-[#E5E2DC] border-t border-b border-[#E5E2DC]">
+          {/* Bottom Statement Footer (now swapped to top) */}
+          <div className="flex-1 w-full flex justify-center items-center bg-[#faf9f5] py-12 lg:py-16 px-4 sm:px-6 md:px-12 shrink-0 overflow-hidden">
+            <div className="group/statement flex flex-col items-center justify-center w-full max-w-7xl mx-auto cursor-default select-none">
+              {/* First line: LET'S + icon + WORK */}
+              <div className="flex flex-row items-center justify-center gap-x-2 sm:gap-x-4 md:gap-x-6 font-sans text-[26px] xs:text-4xl sm:text-6xl md:text-7xl lg:text-[90px] xl:text-[110px] font-normal leading-none tracking-tight text-[#161616] whitespace-nowrap">
+                <span className="text-[#b5b5b0]">“</span>
+                <span>LET'S</span>
+                
+                {/* Centered kupicake icon */}
+                <span className="inline-flex items-center justify-center shrink-0">
+                  <span className="w-8 h-8 xs:w-11 xs:h-11 sm:w-16 sm:h-16 md:w-22 md:h-22 lg:w-[100px] lg:h-[100px] rounded-full flex items-center justify-center overflow-hidden transition-all duration-500 border border-[#E5E2DC] bg-white group-hover/statement:border-[#F05C3B]/60 shadow-xs group-hover/statement:scale-105">
+                    <img
+                      src="https://raw.githubusercontent.com/kupicake/database/HERO-SECTION/LOGO%20KUPICAKE/kupicake%20putih.svg"
+                      alt="Kupicake Logo"
+                      className="w-full h-full object-cover translate-y-[50%] group-hover/statement:translate-y-[35%] transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1.1)] group-hover/statement:scale-110"
+                      referrerPolicy="no-referrer"
+                    />
+                  </span>
+                </span>
+
+                <span>WORK</span>
+              </div>
+
+              {/* Second line: TOGETHER */}
+              <div className="mt-2 sm:mt-4 md:mt-6 font-sans text-[26px] xs:text-4xl sm:text-6xl md:text-7xl lg:text-[90px] xl:text-[110px] font-normal leading-none tracking-tight text-[#161616] whitespace-nowrap flex flex-row items-center justify-center">
+                <span className="text-[#F05C3B]">TOGETHER</span>
+                <span className="text-[#b5b5b0] ml-1 sm:ml-2 md:ml-3">”</span>
+              </div>
+              
+              <div className="mt-8 md:mt-12 flex flex-col items-center gap-3">
+                <span className="h-[1px] w-6 bg-[#161616]/10" />
+                <span className="text-[9px] lg:text-[10px] font-light tracking-[0.4em] lg:tracking-[0.5em] text-[#737370] uppercase">
+                  KUPI CAKE
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-[1px] bg-[#E5E2DC] border-t border-b border-[#E5E2DC] shrink-0">
             {/* Box 1: Status & Info */}
-            <div className="bg-[#faf9f5] hover:bg-white transition-colors duration-500 p-8 md:p-12 lg:p-16 flex flex-col justify-between min-h-[300px] lg:min-h-[380px]">
+            <div className="bg-[#faf9f5] hover:bg-white transition-colors duration-500 p-6 md:p-8 lg:p-10 flex flex-col justify-between">
               <div>
                 <span className="text-[#8a8a85] font-mono text-[10px] md:text-xs uppercase tracking-wider block mb-4">
                   01 // AVAILABILITY
@@ -2800,7 +2901,7 @@ export default function App() {
             </div>
 
             {/* Box 2: Actions & Details */}
-            <div className="bg-[#faf9f5] hover:bg-white transition-colors duration-500 p-8 md:p-12 lg:p-16 flex flex-col justify-between min-h-[300px] lg:min-h-[380px] group/contact-box relative overflow-hidden">
+            <div className="bg-[#faf9f5] hover:bg-white transition-colors duration-500 p-6 md:p-8 lg:p-10 flex flex-col justify-between group/contact-box relative overflow-hidden">
               <div>
                 <span className="text-[#8a8a85] font-mono text-[10px] md:text-xs uppercase tracking-wider block mb-4">
                   02 // DIRECT INQUIRY
@@ -2921,7 +3022,7 @@ export default function App() {
         </div>
 
         {/* Right Grid Margin */}
-        <div className="bg-[#faf9f5] col-start-3 col-end-4 row-start-1" />
+        <div className="bg-[#faf9f5] col-start-3 col-end-4 row-start-1 transition-colors duration-500" />
       </div>
         </>
       ) : activeView.type === "about" ? (
@@ -2932,8 +3033,30 @@ export default function App() {
           </div>
         }>
           <AboutPage
+            scrollY={scrollY}
             onBack={() => {
               setActiveView({ type: "home" });
+              window.scrollTo(0, 0);
+              lenisRef.current?.scrollTo(0, { immediate: true });
+            }}
+          />
+        </Suspense>
+      ) : activeView.type === "gallery" ? (
+        <Suspense fallback={
+          <div className="min-h-screen bg-[#faf9f5] flex flex-col items-center justify-center font-sans font-light text-xs text-[#8c8275] tracking-widest uppercase select-none">
+            <div className="w-8 h-8 rounded-full border border-[#E5E2DC] border-t-[#F05C3B] animate-spin mb-4" />
+            Loading Gallery...
+          </div>
+        }>
+          <GalleryPage
+            scrollY={scrollY}
+            onBack={() => {
+              setActiveView({ type: "home" });
+              window.scrollTo(0, 0);
+              lenisRef.current?.scrollTo(0, { immediate: true });
+            }}
+            onNavigateToProject={(index) => {
+              setActiveView({ type: "project", index });
               window.scrollTo(0, 0);
               lenisRef.current?.scrollTo(0, { immediate: true });
             }}

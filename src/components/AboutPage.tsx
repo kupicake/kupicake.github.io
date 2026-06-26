@@ -20,9 +20,64 @@ import {
 
 interface AboutPageProps {
   onBack: () => void;
+  scrollY?: number;
 }
 
-export default function AboutPage({ onBack }: AboutPageProps) {
+export default function AboutPage({ onBack, scrollY }: AboutPageProps) {
+  const [localScrollY, setLocalScrollY] = useState(0);
+  React.useEffect(() => {
+    if (scrollY !== undefined) return;
+    const handleScroll = () => {
+      setLocalScrollY(window.scrollY);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [scrollY]);
+
+  const currentScroll = scrollY !== undefined ? scrollY : localScrollY;
+
+  const [windowHeight, setWindowHeight] = useState(0);
+  React.useEffect(() => {
+    setWindowHeight(window.innerHeight);
+    const handleResize = () => setWindowHeight(window.innerHeight);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const contactTitleRef = React.useRef<HTMLHeadingElement>(null);
+  let contactTitleProgress = 0;
+  if (contactTitleRef.current && windowHeight > 0) {
+    const rect = contactTitleRef.current.getBoundingClientRect();
+    const startY = windowHeight * 0.9;
+    const endY = windowHeight * 0.3;
+    contactTitleProgress = Math.max(
+      0,
+      Math.min(1, (startY - rect.top) / (startY - endY))
+    );
+  }
+
+  let contactParallaxY = 0;
+  let contactOpacity = 1;
+  let isContactVisible = true;
+  if (typeof document !== "undefined" && windowHeight > 0) {
+    const scrollHeight = document.documentElement.scrollHeight;
+    const maxScroll = scrollHeight - windowHeight;
+    if (maxScroll > 0) {
+      const revealRange = windowHeight + 100;
+      const distanceToBottom = maxScroll - currentScroll;
+      if (distanceToBottom < revealRange) {
+        isContactVisible = true;
+        const pct = Math.max(0, Math.min(1, distanceToBottom / revealRange));
+        contactParallaxY = pct * 100; // slides up smoothly from 100px to 0px
+        contactOpacity = 1 - pct;     // fades in from 0 to 1
+      } else {
+        isContactVisible = false;
+        contactParallaxY = 100;
+        contactOpacity = 0;
+      }
+    }
+  }
+
   const imageContainerRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: imageContainerRef,
@@ -34,22 +89,23 @@ export default function AboutPage({ onBack }: AboutPageProps) {
   const [phoneCopied, setPhoneCopied] = useState(false);
 
   return (
-    <div className="min-h-screen bg-[#faf9f5] font-sans text-[#1a1a1a] relative overflow-x-hidden selection:bg-[#F05C3B] selection:text-white">
-      {/* Decorative background grid pattern overlay matching the theme */}
-      <div
-        className="absolute inset-0 opacity-15 pointer-events-none"
-        style={{
-          backgroundImage: "radial-gradient(#AE9E8E 1.2px, transparent 1.2px)",
-          backgroundSize: "24px 24px",
-        }}
-      />
+    <div className="min-h-screen bg-[#faf9f5] font-sans text-[#1a1a1a] relative overflow-x-hidden selection:bg-[#F05C3B] selection:text-white flex flex-col">
+      <div className="relative z-10 w-full bg-[#faf9f5] flex flex-col">
+        {/* Decorative background grid pattern overlay matching the theme */}
+        <div
+          className="absolute inset-0 opacity-15 pointer-events-none"
+          style={{
+            backgroundImage: "radial-gradient(#AE9E8E 1.2px, transparent 1.2px)",
+            backgroundSize: "24px 24px",
+          }}
+        />
 
-      {/* Grid Border lines container */}
-      <div className="absolute inset-0 pointer-events-none grid grid-cols-[55px_1fr_55px] lg:grid-cols-[85px_1fr_85px] grid-rows-1">
-        <div className="border-r border-[#e5e5e2]/50 h-full" />
-        <div className="h-full" />
-        <div className="border-l border-[#e5e5e2]/50 h-full" />
-      </div>
+        {/* Grid Border lines container */}
+        <div className="absolute inset-0 pointer-events-none grid grid-cols-[55px_1fr_55px] lg:grid-cols-[85px_1fr_85px] grid-rows-1">
+          <div className="border-r border-[#e5e5e2]/50 h-full" />
+          <div className="h-full" />
+          <div className="border-l border-[#e5e5e2]/50 h-full" />
+        </div>
 
       {/* Header Container */}
       <header className="sticky top-0 z-50 bg-[#faf9f5]/85 backdrop-blur-md border-b border-[#e5e5e2] h-[55px] lg:h-[85px] grid grid-cols-[55px_1fr_55px] lg:grid-cols-[85px_1fr_85px] items-center">
@@ -258,147 +314,6 @@ export default function AboutPage({ onBack }: AboutPageProps) {
             </div>
           </div>
 
-          {/* Section 4: Contact Style from Main Page */}
-          <div className="pt-16 text-left w-full">
-            <span className="font-mono text-[9px] md:text-[10px] tracking-[0.4em] text-[#F05C3B] uppercase font-bold block mb-8">
-              04 // GET IN TOUCH
-            </span>
-
-            <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-[1px] bg-[#E5E2DC] border-t border-b border-[#E5E2DC] -mx-6 md:-mx-12 lg:-mx-24 w-[calc(100%+48px)] md:w-[calc(100%+96px)] lg:w-[calc(100%+192px)] max-w-none">
-              {/* Box 1: Status & Info */}
-              <div className="bg-[#faf9f5] hover:bg-white transition-colors duration-500 p-8 md:p-12 lg:p-16 flex flex-col justify-between min-h-[300px] lg:min-h-[380px]">
-                <div>
-                  <span className="text-[#8a8a85] font-mono text-[10px] md:text-xs uppercase tracking-wider block mb-4">
-                    01 // AVAILABILITY
-                  </span>
-                  <h3 className="text-[#1a1a1a] font-normal text-2xl md:text-3xl lg:text-[40px] leading-tight mb-6 font-sans">
-                    Open for new projects and remote collaborations.
-                  </h3>
-                </div>
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 mt-8">
-                  {/* Left: Location & Status */}
-                  <div className="flex flex-col gap-1 font-mono text-[10px] md:text-xs text-[#5a5957]">
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#10b981]" />
-                      <span className="text-[#10b981] font-bold tracking-widest uppercase">
-                        YOGYAKARTA, INDONESIA
-                      </span>
-                    </div>
-                    <span className="text-[#737370]">
-                      [ Worldwide delivery ]
-                    </span>
-                  </div>
-
-                  {/* Right: Capabilities */}
-                  <div className="font-sans text-xs md:text-[13px] lg:text-sm text-[#737370] leading-relaxed text-left sm:text-right font-light">
-                    <p>Branding & Visual Identity</p>
-                    <p>Narrative & Character Design</p>
-                    <p>Motion Graphics & 2D Movement</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Box 2: Actions & Details */}
-              <div className="bg-[#faf9f5] hover:bg-white transition-colors duration-500 p-8 md:p-12 lg:p-16 flex flex-col justify-between min-h-[300px] lg:min-h-[380px] group/contact-box relative overflow-hidden">
-                <div>
-                  <span className="text-[#8a8a85] font-mono text-[10px] md:text-xs uppercase tracking-wider block mb-4">
-                    02 // DIRECT INQUIRY
-                  </span>
-                  <div className="flex flex-col gap-4">
-                    <div className="group/email flex items-center gap-3 relative min-h-[48px]">
-                      <a
-                        href="mailto:riskirw17@gmail.com"
-                        className="text-[#1a1a1a] hover:text-[#F05C3B] font-normal text-2xl md:text-3xl lg:text-[40px] leading-tight text-left block break-all transition-colors duration-500 font-sans"
-                      >
-                        riskirw17@gmail.com
-                      </a>
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          navigator.clipboard.writeText("riskirw17@gmail.com");
-                          setEmailCopied(true);
-                          setTimeout(() => setEmailCopied(false), 2000);
-                        }}
-                        className="p-2 rounded-full hover:bg-[#F05C3B]/10 text-[#737370] hover:text-[#F05C3B] cursor-pointer opacity-0 group-hover/email:opacity-100 focus:opacity-100 transition-all duration-300 flex items-center justify-center shrink-0 border border-[#E5E2DC]"
-                        title="Copy email to clipboard"
-                      >
-                        {emailCopied ? (
-                          <span className="text-xs font-mono text-[#F05C3B] uppercase tracking-wider animate-pulse whitespace-nowrap px-1">
-                            copied!
-                          </span>
-                        ) : (
-                          <Copy className="w-4 h-4" />
-                        )}
-                      </button>
-                    </div>
-                    
-                    <div className="group/phone flex items-center gap-3 relative min-h-[36px]">
-                      <a
-                        href="https://wa.me/6289673731449"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-[#737370] hover:text-[#F05C3B] font-normal text-xl md:text-2xl lg:text-[28px] leading-tight block transition-colors duration-500 font-sans"
-                      >
-                        +62 896 7373 1449
-                      </a>
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          navigator.clipboard.writeText("+6289673731449");
-                          setPhoneCopied(true);
-                          setTimeout(() => setPhoneCopied(false), 2000);
-                        }}
-                        className="p-1.5 rounded-full hover:bg-[#F05C3B]/10 text-[#737370] hover:text-[#F05C3B] cursor-pointer opacity-0 group-hover/phone:opacity-100 focus:opacity-100 transition-all duration-300 flex items-center justify-center shrink-0 border border-[#E5E2DC]"
-                        title="Copy phone number to clipboard"
-                      >
-                        {phoneCopied ? (
-                          <span className="text-[10px] font-mono text-[#F05C3B] uppercase tracking-wider animate-pulse whitespace-nowrap px-1">
-                            copied!
-                          </span>
-                        ) : (
-                          <Copy className="w-3.5 h-3.5" />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex flex-row justify-between items-center w-full mt-8 flex-wrap gap-4 z-10 relative">
-                  {/* Social Links on Left */}
-                  <div className="flex items-center gap-3">
-                    <a
-                      href="https://instagram.com/kupicake"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-10 h-10 rounded-full border border-[#e5e5e2] flex items-center justify-center text-[#5a5957] hover:text-[#F05C3B] hover:border-[#F05C3B] transition-all duration-300"
-                      aria-label="Visit Instagram Profile"
-                    >
-                      <Instagram className="w-4 h-4" />
-                    </a>
-                    <a
-                      href="https://linkedin.com"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-10 h-10 rounded-full border border-[#e5e5e2] flex items-center justify-center text-[#5a5957] hover:text-[#F05C3B] hover:border-[#F05C3B] transition-all duration-300"
-                      aria-label="Visit LinkedIn Profile"
-                    >
-                      <Linkedin className="w-4 h-4" />
-                    </a>
-                  </div>
-
-                  {/* Back to Portfolio on Right */}
-                  <button
-                    onClick={onBack}
-                    className="font-mono text-[10px] uppercase tracking-widest font-bold border border-[#1a1a1a]/15 hover:border-[#1a1a1a] hover:bg-black/5 px-8 py-3.5 rounded-full transition-all duration-300 bg-transparent cursor-pointer text-center"
-                  >
-                    Back to Portfolio
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Right spacer column */}
@@ -413,6 +328,237 @@ export default function AboutPage({ onBack }: AboutPageProps) {
         </span>
         <div className="border-l border-[#e5e5e2] h-full" />
       </footer>
+    </div>
+
+    {/* --- Section 4: Contact (Grid Style, matching other pages with parallax animations) --- */}
+    <div
+      id="contact"
+      className="group/contact w-full min-h-screen lg:h-screen bg-[#E5E2DC] grid lg:grid-cols-[85px_1fr_85px] grid-cols-[55px_1fr_55px] auto-rows-auto gap-[1px] scroll-mt-[55px] lg:scroll-mt-[85px] sticky bottom-0 z-0"
+      style={{
+        transform: `translateY(${contactParallaxY}px)`,
+        opacity: contactOpacity,
+        visibility: isContactVisible ? "visible" : "hidden",
+        willChange: "transform, opacity",
+      }}
+    >
+      {/* Left Grid Margin */}
+      <div className="bg-[#faf9f5] col-start-1 col-end-2 row-start-1 transition-colors duration-500" />
+
+      {/* Center Content */}
+      <div className="bg-[#faf9f5] col-start-2 col-end-3 row-start-1 pt-16 lg:pt-20 pb-0 flex flex-col justify-between items-start w-full min-h-screen lg:h-screen transition-colors duration-500">
+        {/* Section Header */}
+        <div className="w-full flex justify-between items-baseline px-6 md:px-12 lg:px-16 mb-4 xl:mb-6 shrink-0">
+          <h2
+            ref={contactTitleRef}
+            className="font-bold text-[10px] md:text-xs tracking-[0.4em] md:tracking-[0.6em] uppercase text-[#161616]"
+          >
+            <span
+              style={{
+                backgroundImage: `linear-gradient(to right, #161616 ${Math.min(100, contactTitleProgress * 100)}%, #b5b5b0 ${Math.min(100, contactTitleProgress * 100)}%)`,
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+                color: "transparent",
+              }}
+            >
+              GET IN TOUCH
+            </span>
+          </h2>
+          <span className="font-mono text-[9px] text-[#F05C3B]/60 tracking-wider font-light uppercase hidden md:inline">
+            COLLABORATION &bull; DIRECT CHANNELS
+          </span>
+        </div>
+
+        {/* Bottom Statement Footer */}
+        <div className="flex-1 w-full flex justify-center items-center bg-[#faf9f5] py-12 lg:py-16 px-4 sm:px-6 md:px-12 shrink-0 overflow-hidden">
+          <div className="group/statement flex flex-col items-center justify-center w-full max-w-7xl mx-auto cursor-default select-none">
+            {/* First line: LET'S + icon + WORK */}
+            <div className="flex flex-row items-center justify-center gap-x-2 sm:gap-x-4 md:gap-x-6 font-sans text-[26px] xs:text-4xl sm:text-6xl md:text-7xl lg:text-[90px] xl:text-[110px] font-normal leading-none tracking-tight text-[#161616] whitespace-nowrap">
+              <span className="text-[#b5b5b0]">“</span>
+              <span>LET'S</span>
+              
+              {/* Centered kupicake icon */}
+              <span className="inline-flex items-center justify-center shrink-0">
+                <span className="w-8 h-8 xs:w-11 xs:h-11 sm:w-16 sm:h-16 md:w-22 md:h-22 lg:w-[100px] lg:h-[100px] rounded-full flex items-center justify-center overflow-hidden transition-all duration-500 border border-[#E5E2DC] bg-white group-hover/statement:border-[#F05C3B]/60 shadow-xs group-hover/statement:scale-105">
+                  <img
+                    src="https://raw.githubusercontent.com/kupicake/database/HERO-SECTION/LOGO%20KUPICAKE/kupicake%20putih.svg"
+                    alt="Kupicake Logo"
+                    className="w-full h-full object-cover translate-y-[50%] group-hover/statement:translate-y-[35%] transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1.1)] group-hover/statement:scale-110"
+                    referrerPolicy="no-referrer"
+                  />
+                </span>
+              </span>
+
+              <span>WORK</span>
+            </div>
+
+            {/* Second line: TOGETHER */}
+            <div className="mt-2 sm:mt-4 md:mt-6 font-sans text-[26px] xs:text-4xl sm:text-6xl md:text-7xl lg:text-[90px] xl:text-[110px] font-normal leading-none tracking-tight text-[#161616] whitespace-nowrap flex flex-row items-center justify-center">
+              <span className="text-[#F05C3B]">TOGETHER</span>
+              <span className="text-[#b5b5b0] ml-1 sm:ml-2 md:ml-3">”</span>
+            </div>
+            
+            <div className="mt-8 md:mt-12 flex flex-col items-center gap-3">
+              <span className="h-[1px] w-6 bg-[#161616]/10" />
+              <span className="text-[9px] lg:text-[10px] font-light tracking-[0.4em] lg:tracking-[0.5em] text-[#737370] uppercase">
+                KUPI CAKE
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-[1px] bg-[#E5E2DC] border-t border-b border-[#E5E2DC] shrink-0">
+          {/* Box 1: Status & Info */}
+          <div className="bg-[#faf9f5] hover:bg-white transition-colors duration-500 p-6 md:p-8 lg:p-10 flex flex-col justify-between">
+            <div>
+              <span className="text-[#8a8a85] font-mono text-[10px] md:text-xs uppercase tracking-wider block mb-4">
+                01 // AVAILABILITY
+              </span>
+              <h3 className="text-[#1a1a1a] font-normal text-2xl md:text-3xl lg:text-[40px] leading-tight mb-6">
+                Open for new projects and remote collaborations.
+              </h3>
+            </div>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 mt-8">
+              {/* Left: Location & Status */}
+              <div className="flex flex-col gap-1 font-mono text-[10px] md:text-xs text-[#5a5957]">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#10b981]" />
+                  <span className="text-[#10b981] font-bold tracking-widest uppercase">
+                    YOGYAKARTA, INDONESIA
+                  </span>
+                </div>
+                <span className="text-[#737370]">
+                  [ Worldwide delivery ]
+                </span>
+              </div>
+
+              {/* Right: Capabilities */}
+              <div className="font-sans text-xs md:text-[13px] lg:text-sm text-[#737370] leading-relaxed text-left sm:text-right">
+                <p>Branding & Visual Identity</p>
+                <p>Narrative & Character Design</p>
+                <p>Motion Graphics & 2D Movement</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Box 2: Actions & Details */}
+          <div className="bg-[#faf9f5] hover:bg-white transition-colors duration-500 p-6 md:p-8 lg:p-10 flex flex-col justify-between group/contact-box relative overflow-hidden">
+            <div>
+              <span className="text-[#8a8a85] font-mono text-[10px] md:text-xs uppercase tracking-wider block mb-4">
+                02 // DIRECT INQUIRY
+              </span>
+              <div className="flex flex-col gap-4">
+                <div className="group/email flex items-center gap-3 relative min-h-[48px]">
+                  <a
+                    href="mailto:riskirw17@gmail.com"
+                    className="text-[#1a1a1a] hover:text-[#F05C3B] font-normal text-2xl md:text-3xl lg:text-[40px] leading-tight text-left block break-all transition-colors duration-500 font-sans"
+                  >
+                    riskirw17@gmail.com
+                  </a>
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      navigator.clipboard.writeText("riskirw17@gmail.com");
+                      setEmailCopied(true);
+                      setTimeout(() => setEmailCopied(false), 2000);
+                    }}
+                    className="p-2 rounded-full hover:bg-[#F05C3B]/10 text-[#737370] hover:text-[#F05C3B] cursor-pointer opacity-0 group-hover/email:opacity-100 focus:opacity-100 transition-all duration-300 flex items-center justify-center shrink-0 border border-[#E5E2DC]"
+                    title="Copy email to clipboard"
+                  >
+                    {emailCopied ? (
+                      <span className="text-xs font-mono text-[#F05C3B] uppercase tracking-wider animate-pulse whitespace-nowrap px-1">
+                        copied!
+                      </span>
+                    ) : (
+                      <Copy className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+                
+                <div className="group/phone flex items-center gap-3 relative min-h-[36px]">
+                  <a
+                    href="https://wa.me/6289673731449"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#737370] hover:text-[#F05C3B] font-normal text-xl md:text-2xl lg:text-[28px] leading-tight block transition-colors duration-500 font-sans"
+                  >
+                    +62 896 7373 1449
+                  </a>
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      navigator.clipboard.writeText("+6289673731449");
+                      setPhoneCopied(true);
+                      setTimeout(() => setPhoneCopied(false), 2000);
+                    }}
+                    className="p-1.5 rounded-full hover:bg-[#F05C3B]/10 text-[#737370] hover:text-[#F05C3B] cursor-pointer opacity-0 group-hover/phone:opacity-100 focus:opacity-100 transition-all duration-300 flex items-center justify-center shrink-0 border border-[#E5E2DC]"
+                    title="Copy phone number to clipboard"
+                  >
+                    {phoneCopied ? (
+                      <span className="text-[10px] font-mono text-[#F05C3B] uppercase tracking-wider animate-pulse whitespace-nowrap px-1">
+                        copied!
+                      </span>
+                    ) : (
+                      <Copy className="w-3.5 h-3.5" />
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-row justify-between items-center w-full mt-8 flex-wrap gap-4 z-10 relative">
+              {/* Social Links on Left */}
+              <div className="flex items-center gap-3">
+                <a
+                  href="https://www.instagram.com/kupicake_/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-10 h-10 rounded-full border border-[#e5e5e2] flex items-center justify-center text-[#5a5957] hover:text-[#F05C3B] hover:border-[#F05C3B] transition-all duration-300"
+                  aria-label="Instagram"
+                >
+                  <Instagram className="w-4 h-4" />
+                </a>
+                <a
+                  href="https://vgen.co/kupicake_"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-10 h-10 rounded-full border border-[#e5e5e2] flex items-center justify-center text-[#5a5957] hover:text-[#F05C3B] hover:border-[#F05C3B] transition-all duration-300 p-1.5"
+                  aria-label="VGen"
+                >
+                  <img
+                    src="https://raw.githubusercontent.com/kupicake/database/HERO-SECTION/LOGO%20KUPICAKE/VGen%20Badge%20-%20outline.webp"
+                    alt="VGen"
+                    className="w-full h-full object-contain grayscale hover:grayscale-0 transition-all duration-300"
+                  />
+                </a>
+                <a
+                  href="https://www.linkedin.com/in/riskirw17"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-10 h-10 rounded-full border border-[#e5e5e2] flex items-center justify-center text-[#5a5957] hover:text-[#F05C3B] hover:border-[#F05C3B] transition-all duration-300"
+                  aria-label="LinkedIn"
+                >
+                  <Linkedin className="w-4 h-4" />
+                </a>
+              </div>
+
+              {/* Back to Portfolio on Right */}
+              <button
+                onClick={onBack}
+                className="font-mono text-[10px] uppercase tracking-widest font-bold border border-[#1a1a1a]/15 hover:border-[#1a1a1a] hover:bg-black/5 px-8 py-3.5 rounded-full transition-all duration-300 bg-transparent cursor-pointer text-center"
+              >
+                Back to Portfolio
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Right Grid Margin */}
+      <div className="bg-[#faf9f5] col-start-3 col-end-4 row-start-1 transition-colors duration-500" />
+    </div>
     </div>
   );
 }

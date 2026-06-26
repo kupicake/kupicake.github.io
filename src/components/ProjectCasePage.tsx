@@ -21,7 +21,10 @@ import {
   ChevronRight,
   Volume2,
   VolumeX,
-  Github
+  Github,
+  Instagram,
+  Linkedin,
+  Copy
 } from "lucide-react";
 
 interface Project {
@@ -604,43 +607,90 @@ const Sample2Process = () => {
 const CreativeProcess = ({ projectIndex }: { projectIndex?: number }) => {
   const [activeStep, setActiveStep] = useState(0);
   const [localScrollY, setLocalScrollY] = useState(0);
+  const [scrollProgress, setScrollProgress] = useState(0);
+
+  const activeStepRef = React.useRef(0);
+  useEffect(() => {
+    activeStepRef.current = activeStep;
+  }, [activeStep]);
+
+  const isHoveringStepsRef = React.useRef(false);
 
   const pipelineHeadingRef = React.useRef<HTMLHeadingElement>(null);
   const pipelineTextRef = React.useRef<HTMLParagraphElement>(null);
+  const stepsContainerRef = React.useRef<HTMLDivElement>(null);
+  const leftColumnRef = React.useRef<HTMLDivElement>(null);
+  const sectionRef = React.useRef<HTMLDivElement>(null);
+  const stickyParentRef = React.useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleScroll = () => {
       setLocalScrollY(window.scrollY);
+
+      // Calculate scroll progress for sticky section
+      const parent = stickyParentRef.current;
+      if (parent) {
+        const rect = parent.getBoundingClientRect();
+        const parentHeight = rect.height;
+        const parentTop = rect.top + window.scrollY;
+        const viewportHeight = window.innerHeight;
+
+        const start = parentTop - 120; // sticky top offset
+        
+        // Find the last step element so we can end our parallax scroll progress when it is active/centered
+        const lastStepEl = document.getElementById(`creative-step-${creativeSteps.length - 1}`);
+        let end = parentTop + parentHeight - viewportHeight;
+        if (lastStepEl) {
+          const lastRect = lastStepEl.getBoundingClientRect();
+          const lastStepPageTop = lastRect.top + window.scrollY;
+          const lastStepCenter = lastStepPageTop + lastRect.height / 2;
+          end = lastStepCenter - viewportHeight / 2;
+        }
+
+        const scrollY = window.scrollY;
+
+        if (scrollY >= start && scrollY <= end) {
+          const totalDuration = end - start;
+          if (totalDuration > 0) {
+            const p = (scrollY - start) / totalDuration;
+            setScrollProgress(Math.max(0, Math.min(1, p)));
+          }
+        } else if (scrollY < start) {
+          setScrollProgress(0);
+        } else {
+          setScrollProgress(1);
+        }
+      }
+      
+      if (!isHoveringStepsRef.current) {
+        const targetLine = window.scrollY + window.innerHeight * 0.5;
+        let closestIdx = 0;
+        let minDistance = Infinity;
+
+        creativeSteps.forEach((_, idx) => {
+          const el = document.getElementById(`creative-step-${idx}`);
+          if (el) {
+            const rect = el.getBoundingClientRect();
+            const elPageTop = rect.top + window.scrollY;
+            const elCenter = elPageTop + rect.height / 2;
+            const distance = Math.abs(elCenter - targetLine);
+            if (distance < minDistance) {
+              minDistance = distance;
+              closestIdx = idx;
+            }
+          }
+        });
+        setActiveStep(closestIdx);
+      }
     };
+
     window.addEventListener("scroll", handleScroll, { passive: true });
     handleScroll();
     
     // Safety delay trigger
     const t = setTimeout(handleScroll, 100);
 
-    const observers: IntersectionObserver[] = [];
-    
-    creativeSteps.forEach((_, idx) => {
-      const el = document.getElementById(`creative-step-${idx}`);
-      if (el) {
-        const observer = new IntersectionObserver(
-          ([entry]) => {
-            if (entry.isIntersecting) {
-              setActiveStep(idx);
-            }
-          },
-          {
-            rootMargin: "-25% 0px -40% 0px",
-            threshold: 0.1,
-          }
-        );
-        observer.observe(el);
-        observers.push(observer);
-      }
-    });
-
     return () => {
-      observers.forEach(o => o.disconnect());
       window.removeEventListener("scroll", handleScroll);
       clearTimeout(t);
     };
@@ -650,7 +700,13 @@ const CreativeProcess = ({ projectIndex }: { projectIndex?: number }) => {
     setActiveStep(idx);
     const el = document.getElementById(`creative-step-${idx}`);
     if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      const rect = el.getBoundingClientRect();
+      const elementCenter = rect.top + window.scrollY + rect.height / 2;
+      const targetScrollY = elementCenter - window.innerHeight / 2;
+      window.scrollTo({
+        top: targetScrollY,
+        behavior: "smooth"
+      });
     }
   };
 
@@ -673,7 +729,7 @@ const CreativeProcess = ({ projectIndex }: { projectIndex?: number }) => {
   }
 
   return (
-    <div className="w-full bg-[#FAF9F5] border-t border-[#E5E2DC]">
+    <div ref={sectionRef} className="w-full bg-[#FAF9F5] border-t border-[#E5E2DC]">
       {/* THE CREATIVE PROCESS - STYLED EXACTLY LIKE CONCEPT */}
       <div 
         className="bg-[#FAF9F5] border-b border-[#E5E2DC] py-24 md:py-32 px-6 md:px-10 flex flex-col justify-center items-start w-full"
@@ -726,153 +782,158 @@ const CreativeProcess = ({ projectIndex }: { projectIndex?: number }) => {
         </p>
       </div>
 
-      {/* Sticky Split Columns Side-by-Side with Border line separator */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 relative w-full bg-[#FAF9F5] border-b border-[#E5E2DC]">
-        {/* Left Sticky Column: Media Presentation */}
-        <div className="w-full h-[50vh] lg:h-[calc(100vh-120px)] lg:sticky lg:top-[90px] z-10 border-b lg:border-b-0 lg:border-r border-[#E5E2DC] overflow-hidden relative group select-none bg-neutral-950">
-          
-          {/* Retro Viewport Grid & Outlines */}
-          <div className="absolute inset-0 pointer-events-none border-4 border-[#161616]/10 z-20" />
-          <div className="absolute inset-0 pointer-events-none z-20 flex flex-col justify-between p-4 font-mono text-[8px] text-white/55">
-            {/* Top Bar Info */}
-            <div className="flex justify-between items-center bg-black/40 backdrop-blur-xs px-2 py-1 border border-white/5 uppercase tracking-wider">
-              <span className="flex items-center gap-1.5 overflow-hidden text-ellipsis whitespace-nowrap max-w-[70%]">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#F05C3B] animate-pulse shrink-0" />
-                {creativeSteps[activeStep].type === "video" 
-                  ? <span className="text-white font-bold select-text">{creativeSteps[activeStep].title.toUpperCase()}</span>
-                  : "LIVE MODEL FEED"
-                }
-              </span>
-              <span>STEP {creativeSteps[activeStep].num} // {creativeSteps[activeStep].phase}</span>
-            </div>
+      {/* Scrollable Container Wrapper with sticky content */}
+      <div ref={stickyParentRef} className="relative w-full bg-[#FAF9F5] border-b border-[#E5E2DC]">
+        {/* Split Columns Side-by-Side with Border line separator - left sticky, right scrolls */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 relative w-full">
+          {/* Left Column Track (Stretches to match the tall right column) */}
+          <div className="w-full border-b lg:border-b-0 lg:border-r border-[#E5E2DC] relative">
+            {/* Left Sticky Column: Media Presentation */}
+            <div ref={leftColumnRef} className="w-full h-[50vh] lg:h-[calc(100vh-160px)] lg:sticky lg:top-[120px] z-10 overflow-hidden relative group select-none bg-neutral-950">
             
-            {/* Bottom Bar Info */}
-            <div className="flex justify-between items-end bg-black/40 backdrop-blur-xs p-2.5 border border-white/5 uppercase tracking-wider w-full gap-2">
-              <div className="flex flex-col gap-1 text-left">
-                <span className="text-[#F05C3B] font-bold text-[9px]">
+            {/* Retro Viewport Grid & Outlines */}
+            <div className="absolute inset-0 pointer-events-none border-4 border-[#161616]/10 z-20" />
+            <div className="absolute inset-0 pointer-events-none z-20 flex flex-col justify-between p-4 font-mono text-[8px] text-white/55">
+              {/* Top Bar Info */}
+              <div className="flex justify-between items-center bg-black/40 backdrop-blur-xs px-2 py-1 border border-white/5 uppercase tracking-wider">
+                <span className="flex items-center gap-1.5 overflow-hidden text-ellipsis whitespace-nowrap max-w-[70%]">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#F05C3B] animate-pulse shrink-0" />
                   {creativeSteps[activeStep].type === "video" 
-                    ? "LIVE MODEL FEED" 
-                    : creativeSteps[activeStep].title
+                    ? <span className="text-white font-bold select-text">{creativeSteps[activeStep].title.toUpperCase()}</span>
+                    : "LIVE MODEL FEED"
                   }
                 </span>
-                <span className="text-white/45 text-[7px]" style={{ fontSize: "7px" }}>FORMAT: {creativeSteps[activeStep].format}</span>
+                <span>STEP {creativeSteps[activeStep].num} // {creativeSteps[activeStep].phase}</span>
               </div>
-              <div className="text-right flex flex-col gap-1 items-end">
-                <span className="text-white/70 font-semibold">{creativeSteps[activeStep].layerCount}</span>
-                <span className="text-white/35 text-[7px]" style={{ fontSize: "7px" }}>{creativeSteps[activeStep].engine}</span>
+              
+              {/* Bottom Bar Info */}
+              <div className="flex justify-between items-end bg-black/40 backdrop-blur-xs p-2.5 border border-white/5 uppercase tracking-wider w-full gap-2">
+                <div className="flex flex-col gap-1 text-left">
+                  <span className="text-[#F05C3B] font-bold text-[9px]">
+                    {creativeSteps[activeStep].type === "video" 
+                      ? "LIVE MODEL FEED" 
+                      : creativeSteps[activeStep].title
+                    }
+                  </span>
+                  <span className="text-white/45 text-[7px]" style={{ fontSize: "7px" }}>FORMAT: {creativeSteps[activeStep].format}</span>
+                </div>
+                <div className="text-right flex flex-col gap-1 items-end">
+                  <span className="text-white/70 font-semibold">{creativeSteps[activeStep].layerCount}</span>
+                  <span className="text-white/35 text-[7px]" style={{ fontSize: "7px" }}>{creativeSteps[activeStep].engine}</span>
+                </div>
               </div>
             </div>
+
+            {/* Crosshair accents */}
+            <div className="absolute top-1/2 left-3 w-4 h-[1px] bg-[#F05C3B]/40 pointer-events-none z-20" />
+            <div className="absolute top-1/2 right-3 w-4 h-[1px] bg-[#F05C3B]/40 pointer-events-none z-20" />
+            <div className="absolute left-1/2 top-3 w-[1px] h-4 bg-[#F05C3B]/40 pointer-events-none z-20" />
+            <div className="absolute left-1/2 bottom-3 w-[1px] h-4 bg-[#F05C3B]/40 pointer-events-none z-20" />
+
+            {/* Assets rendering stacked layers with opacity transition */}
+            {creativeSteps.map((step, idx) => {
+              const isActive = activeStep === idx;
+              return (
+                <div
+                  key={idx}
+                  className="absolute inset-0 w-full h-full transition-opacity duration-700 ease-in-out overflow-hidden"
+                  style={{
+                    opacity: isActive ? 1 : 0,
+                    zIndex: isActive ? 10 : 0,
+                  }}
+                >
+                  {step.type === "image" ? (
+                    <img
+                      src={step.asset}
+                      alt={step.title}
+                      className="absolute inset-0 w-full h-full select-none pointer-events-none object-cover object-[75%_center]"
+                      referrerPolicy="no-referrer"
+                      loading="eager"
+                    />
+                  ) : (
+                    <video
+                      src={step.asset}
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      preload="auto"
+                      className="absolute inset-0 w-full h-full select-none pointer-events-none object-cover object-[75%_center]"
+                    />
+                  )}
+                </div>
+              );
+            })}
           </div>
-
-          {/* Crosshair accents */}
-          <div className="absolute top-1/2 left-3 w-4 h-[1px] bg-[#F05C3B]/40 pointer-events-none z-20" />
-          <div className="absolute top-1/2 right-3 w-4 h-[1px] bg-[#F05C3B]/40 pointer-events-none z-20" />
-          <div className="absolute left-1/2 top-3 w-[1px] h-4 bg-[#F05C3B]/40 pointer-events-none z-20" />
-          <div className="absolute left-1/2 bottom-3 w-[1px] h-4 bg-[#F05C3B]/40 pointer-events-none z-20" />
-
-          {/* Assets rendering stacked layers with opacity transition */}
-          {creativeSteps.map((step, idx) => {
-            const isActive = activeStep === idx;
-            return (
-              <div
-                key={idx}
-                className="absolute inset-0 w-full h-full transition-opacity duration-700 ease-in-out"
-                style={{
-                  opacity: isActive ? 1 : 0,
-                  zIndex: isActive ? 10 : 0,
-                }}
-              >
-                {step.type === "image" ? (
-                  <img
-                    src={step.asset}
-                    alt={step.title}
-                    className="w-full h-full object-cover select-none pointer-events-none"
-                    style={{ objectPosition: "75% center" }}
-                    referrerPolicy="no-referrer"
-                    loading="eager"
-                  />
-                ) : (
-                  <video
-                    src={step.asset}
-                    autoPlay
-                    loop
-                    muted
-                    playsInline
-                    preload="auto"
-                    className="w-full h-full object-cover select-none pointer-events-none"
-                    style={{ objectPosition: "75% center" }}
-                  />
-                )}
-              </div>
-            );
-          })}
         </div>
 
-        {/* Right Scrolling Column: Descriptions */}
-        <div className="flex flex-col w-full bg-transparent">
-          {creativeSteps.map((step, idx) => {
-            const isActive = activeStep === idx;
-            return (
-              <div
-                key={idx}
-                id={`creative-step-${idx}`}
-                onPointerOver={() => {
-                  if (activeStep !== idx) setActiveStep(idx);
-                }}
-                onPointerMove={() => {
-                  if (activeStep !== idx) setActiveStep(idx);
-                }}
-                onPointerDown={() => {
-                  if (activeStep !== idx) setActiveStep(idx);
-                }}
-                onTouchStart={() => {
-                  if (activeStep !== idx) setActiveStep(idx);
-                }}
-                onClick={() => handleStepClick(idx)}
-                className={`group/step p-6 md:p-10 lg:p-14 border-b border-[#E5E2DC] last:border-b-0 cursor-pointer flex gap-6 md:gap-8 transition-all duration-500 items-start ${
-                  isActive ? "bg-white/70 opacity-100" : "bg-transparent opacity-40 hover:opacity-75"
-                }`}
-              >
-                {/* Step index circle/indicator */}
-                <div className="flex flex-col items-center pt-1 shrink-0">
-                  <span
-                    className={`font-mono text-xs md:text-sm font-bold transition-colors duration-400 ${
-                      isActive ? "text-[#F05C3B]" : "text-[#AE9E8E]"
-                    }`}
-                  >
-                    {step.num}
-                  </span>
-                  {/* Visual linkage track */}
-                  <div
-                    className={`w-[1px] bg-gradient-to-b transition-all duration-500 mt-2 ${
-                      isActive ? "from-[#F05C3B] to-transparent h-16" : "from-transparent to-transparent h-8"
-                    }`}
-                  />
-                </div>
+        {/* Right Column: Descriptions */}
+          <div 
+            className="flex flex-col w-full bg-transparent pt-12 pb-32 lg:pb-[80vh]"
+            onMouseEnter={() => {
+              isHoveringStepsRef.current = true;
+            }}
+            onMouseLeave={() => {
+              isHoveringStepsRef.current = false;
+            }}
+          >
+            {creativeSteps.map((step, idx) => {
+              const isActive = activeStep === idx;
+              return (
+                <div
+                  key={idx}
+                  id={`creative-step-${idx}`}
+                  onClick={() => handleStepClick(idx)}
+                  onMouseEnter={() => {
+                    if (window.innerWidth >= 1024) {
+                      setActiveStep(idx);
+                    }
+                  }}
+                  className={`group/step py-24 px-5 md:py-28 md:px-8 lg:py-36 lg:px-14 border-b border-[#E5E2DC] last:border-b-0 cursor-pointer flex gap-6 md:gap-8 transition-all duration-500 items-start ${
+                    isActive ? "bg-white/70 opacity-100" : "bg-transparent opacity-40 hover:opacity-75"
+                  }`}
+                >
+                  {/* Step index circle/indicator */}
+                  <div className="flex flex-col items-center pt-1 shrink-0">
+                    <span
+                      className={`font-mono text-xs md:text-sm font-bold transition-colors duration-400 ${
+                        isActive ? "text-[#F05C3B]" : "text-[#AE9E8E]"
+                      }`}
+                    >
+                      {step.num}
+                    </span>
+                    {/* Visual linkage track */}
+                    <div
+                      className={`w-[1px] bg-gradient-to-b transition-all duration-500 mt-2 ${
+                        isActive ? "from-[#F05C3B] to-transparent h-16" : "from-transparent to-transparent h-8"
+                      }`}
+                    />
+                  </div>
 
-                {/* Text Blocks - matched to Case Synopsis font sizes */}
-                <div className="flex-grow">
-                  <span className="font-mono text-[9px] uppercase tracking-widest text-[#AE9E8E] block mb-2 font-medium">
-                    PHASE 0{idx + 1} // {step.phase}
-                  </span>
-                  <h4
-                    className={`font-sans text-[#161616] text-base md:text-lg font-light leading-snug transition-all duration-400 ${
-                      isActive ? "opacity-100" : "opacity-60"
-                    }`}
-                  >
-                    {step.title}
-                  </h4>
-                  <p
-                    className={`text-[#5a564e] text-xs md:text-sm font-light leading-relaxed select-text mt-3.5 transition-all duration-400 ${
-                      isActive ? "opacity-100" : "opacity-60"
-                    }`}
-                  >
-                    {step.desc}
-                  </p>
+                  {/* Text Blocks - matched to Case Synopsis font sizes */}
+                  <div className="flex-grow">
+                    <span className="font-mono text-[9px] uppercase tracking-widest text-[#AE9E8E] block mb-2 font-medium">
+                      PHASE 0{idx + 1} // {step.phase}
+                    </span>
+                    <h4
+                      className={`font-sans text-[#161616] text-base md:text-lg font-light leading-snug transition-all duration-400 ${
+                        isActive ? "opacity-100" : "opacity-60"
+                      }`}
+                    >
+                      {step.title}
+                    </h4>
+                    <p
+                      className={`text-[#5a564e] text-xs md:text-sm font-light leading-relaxed select-text mt-3.5 transition-all duration-400 ${
+                        isActive ? "opacity-100" : "opacity-60"
+                      }`}
+                    >
+                      {step.desc}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>
@@ -1283,6 +1344,8 @@ export default function ProjectCasePage({
 }: ProjectCasePageProps) {
   const [copiedColor, setCopiedColor] = useState<string | null>(null);
   const [hoveredMoodboardIdx, setHoveredMoodboardIdx] = useState<number | null>(null);
+  const [emailCopied, setEmailCopied] = useState(false);
+  const [phoneCopied, setPhoneCopied] = useState(false);
 
   // Local scroll state to force re-renders on scroll so bounding client rects are recalculated in real time
   const [localScrollY, setLocalScrollY] = useState(0);
@@ -1339,6 +1402,40 @@ export default function ProjectCasePage({
     const startY = windowHeight * 0.85;
     const endY = windowHeight * 0.35;
     conceptTextProgress = Math.max(0, Math.min(1, (startY - rect.top) / (startY - endY)));
+  }
+
+  const contactTitleRef = React.useRef<HTMLHeadingElement>(null);
+  let contactTitleProgress = 0;
+  if (contactTitleRef.current && windowHeight > 0) {
+    const rect = contactTitleRef.current.getBoundingClientRect();
+    const startY = windowHeight * 0.9;
+    const endY = windowHeight * 0.3;
+    contactTitleProgress = Math.max(
+      0,
+      Math.min(1, (startY - rect.top) / (startY - endY))
+    );
+  }
+
+  let contactParallaxY = 0;
+  let contactOpacity = 1;
+  let isContactVisible = true;
+  if (typeof document !== "undefined" && windowHeight > 0) {
+    const scrollHeight = document.documentElement.scrollHeight;
+    const maxScroll = scrollHeight - windowHeight;
+    if (maxScroll > 0) {
+      const revealRange = windowHeight + 100;
+      const distanceToBottom = maxScroll - currentScroll;
+      if (distanceToBottom < revealRange) {
+        isContactVisible = true;
+        const pct = Math.max(0, Math.min(1, distanceToBottom / revealRange));
+        contactParallaxY = pct * 100; // slides up smoothly from 100px to 0px
+        contactOpacity = 1 - pct;     // fades in from 0 to 1
+      } else {
+        isContactVisible = false;
+        contactParallaxY = 100;
+        contactOpacity = 0;
+      }
+    }
   }
 
   // Case study interactive state
@@ -1524,59 +1621,17 @@ export default function ProjectCasePage({
 
 
   return (
-    <div className="w-full bg-[#E5E2DC] min-h-screen text-[#161616]">
-      {/* 3-Column Precise Grid Wrapper */}
-      <div className="w-full grid lg:grid-cols-[85px_1fr_85px] grid-cols-[55px_1fr_55px] gap-[1px] bg-[#E5E2DC]">
+    <div className="w-full bg-[#FAF9F5] min-h-screen text-[#161616] relative flex flex-col">
+      <div className="relative z-10 w-full bg-[#E5E2DC] flex flex-col">
+        {/* 3-Column Precise Grid Wrapper */}
+        <div className="w-full grid lg:grid-cols-[85px_1fr_85px] grid-cols-[55px_1fr_55px] gap-[1px] bg-[#E5E2DC]">
         {/* Left column margin */}
         <div className="bg-[#FAF9F5] min-h-screen col-start-1 col-end-2 row-start-1 flex flex-col justify-between py-12 items-center text-[#8c8275] border-r border-[#E5E2DC]/30">
-          <div className="text-[10px] font-mono tracking-widest uppercase rotate-90 origin-left translate-x-3.5 mt-8 whitespace-nowrap">
-            STUDIO FILE // {project.num}
-          </div>
-          <button 
-            onClick={onBack}
-            className="w-10 h-10 flex items-center justify-center rounded-full border border-[#E5E2DC] hover:border-[#F05C3B] hover:text-[#F05C3B] transition-colors cursor-pointer"
-            title="Return to home grid"
-          >
-            ←
-          </button>
         </div>
 
         {/* Center detailed column */}
         <div className="bg-[#FAF9F5] col-start-2 col-end-3 row-start-1 flex flex-col min-h-screen w-full">
           
-          {/* HEADER ROW - Back and Title with Case numbering */}
-          <div className="border-b border-[#E5E2DC] py-5 px-6 md:px-12 flex justify-between items-center bg-white shrink-0">
-            <button
-              onClick={onBack}
-              className="group/back inline-flex items-center gap-2.5 text-[9px] md:text-xs font-mono tracking-widest uppercase text-[#5a564e] hover:text-[#F05C3B] transition-colors cursor-pointer bg-transparent"
-            >
-              <ArrowLeft className="w-3.5 h-3.5 transition-transform duration-300 group-hover/back:-translate-x-1" />
-              <span>Back To Projects</span>
-            </button>
-
-            <span className="text-[10px] md:text-xs font-mono tracking-widest text-[#AE9E8E] uppercase">
-              CASE STUDY {project.num} / 03
-            </span>
-
-            {/* In-page direct case slider */}
-            <div className="flex items-center gap-1">
-              <button
-                onClick={onPrev}
-                className="w-7 h-7 flex items-center justify-center rounded-full border border-[#E5E2DC] text-xs hover:border-[#F05C3B] hover:text-[#F05C3B] active:scale-95 transition-all cursor-pointer"
-                title="Go to previous project details"
-              >
-                ←
-              </button>
-              <button
-                onClick={onNext}
-                className="w-7 h-7 flex items-center justify-center rounded-full border border-[#E5E2DC] text-xs hover:border-[#F05C3B] hover:text-[#F05C3B] active:scale-95 transition-all cursor-pointer"
-                title="Go to next project details"
-              >
-                →
-              </button>
-            </div>
-          </div>
-
           {/* MAIN HERO SECTION */}
           <div className="relative w-full aspect-video md:max-h-[580px] bg-slate-100 overflow-hidden border-b border-[#E5E2DC]">
             {/* Blueprint grid dots */}
@@ -1668,16 +1723,79 @@ export default function ProjectCasePage({
             )}
             
             {/* Elegant metadata details bar overlaid */}
-            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-6 md:p-10 flex flex-col justify-end text-white select-none z-20">
-              <span className="text-[#F05C3B] font-mono text-[10px] md:text-xs tracking-[0.3em] uppercase mb-1.5 animate-pulse">
-                ACTIVE SHOWCASE
-              </span>
-              <h1 className="text-3xl md:text-5xl lg:text-[62px] font-normal leading-none tracking-tight text-white uppercase font-sans">
-                {project.title}
-              </h1>
-              <p className="text-[#dfdfd8] text-xs md:text-sm font-light uppercase tracking-wider mt-2.5 max-w-xl">
-                {project.subtitle}
-              </p>
+            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent p-6 md:p-10 flex flex-col md:flex-row justify-between items-start md:items-end text-white select-none z-20 gap-6">
+              <div className="flex flex-col justify-end text-white select-none">
+                <span className="text-[#F05C3B] font-mono text-[10px] md:text-xs tracking-[0.3em] uppercase mb-1.5 animate-pulse">
+                  ACTIVE SHOWCASE
+                </span>
+                <h1 className="text-3xl md:text-5xl lg:text-[62px] font-normal leading-none tracking-tight text-white uppercase font-sans">
+                  {project.title}
+                </h1>
+                <p className="text-[#dfdfd8] text-xs md:text-sm font-light uppercase tracking-wider mt-2.5 max-w-xl">
+                  {project.subtitle}
+                </p>
+              </div>
+
+              {/* Live Project Website Button */}
+              {(projectIndex === 1 || projectIndex === 2) && (
+                <a
+                  href={
+                    projectIndex === 1
+                      ? "https://www.webtoons.com/id/canvas/scary-sweetheart/list?title_no=1074175"
+                      : "https://verygoodenof.itch.io/deadliner"
+                  }
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="relative flex items-center justify-center w-28 h-28 md:w-32 md:h-32 group select-none cursor-pointer shrink-0 transition-all duration-300 self-center md:self-end"
+                >
+                  {/* Outer rotating text container */}
+                  <div 
+                    className="absolute inset-0 w-full h-full transition-transform duration-700 ease-out group-hover:scale-105"
+                    style={{ animation: "spin 15s linear infinite" }}
+                  >
+                    <svg viewBox="0 0 100 100" className="w-full h-full overflow-visible">
+                      <defs>
+                        <path
+                          id="liveSitePath"
+                          d="M 50, 50 m -38, 0 a 38,38 0 1,1 76,0 a 38,38 0 1,1 -76,0"
+                          fill="none"
+                        />
+                      </defs>
+                      <circle 
+                        cx="50" 
+                        cy="50" 
+                        r="38" 
+                        fill="none" 
+                        className="stroke-white/30 group-hover:stroke-[#F05C3B]/60 transition-colors duration-300"
+                        strokeWidth="1" 
+                        strokeDasharray="4,4"
+                      />
+                      <text className="fill-white/85 group-hover:fill-white font-mono text-[7px] tracking-[0.16em] uppercase transition-colors duration-300 font-bold">
+                        <textPath href="#liveSitePath" startOffset="0%">
+                          • VISIT LIVE SITE • VISIT LIVE SITE
+                        </textPath>
+                      </text>
+                    </svg>
+                  </div>
+
+                  {/* Inner Globe Button with dynamic hover transitions */}
+                  <div className="absolute w-14 h-14 md:w-16 md:h-16 bg-white/10 backdrop-blur-xs rounded-full border border-white/25 flex items-center justify-center group-hover:bg-[#F05C3B] group-hover:border-[#F05C3B] transition-all duration-300 shadow-[0_0_15px_rgba(255,255,255,0.05)] group-hover:shadow-[0_0_20px_rgba(240,92,59,0.4)] group-hover:scale-110">
+                    <svg 
+                      xmlns="http://www.w3.org/2000/svg" 
+                      viewBox="0 0 24 24" 
+                      fill="none" 
+                      className="w-6 h-6 md:w-7 md:h-7 stroke-white transition-transform duration-500 group-hover:rotate-12" 
+                      strokeWidth="1.5" 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round"
+                    >
+                      <circle cx="12" cy="12" r="10" />
+                      <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
+                      <path d="M2 12h20" />
+                    </svg>
+                  </div>
+                </a>
+              )}
             </div>
           </div>
 
@@ -2077,20 +2195,9 @@ export default function ProjectCasePage({
                       05 // CORE CHARACTER DESIGN • ENVIRONMENT ART • MODULAR SYSTEM
                     </span>
                   </div>
-                  <p className="text-[#5a564e] text-xs md:text-sm font-light leading-relaxed select-text mt-4 mb-6">
+                  <p className="text-[#5a564e] text-xs md:text-sm font-light leading-relaxed select-text mt-4 mb-8">
                     For the game’s core visual development, I collaborated on the design of the main character, Dudung, creating full-body turnarounds and expressive sprites that convey his personality during gameplay, including a custom animated title screen of him working late into the night to set the game's relatable tone. Alongside character design, I established the environment for the 2D platformer world by creating a modular system of background assets, buildings, and environmental flora that fit seamlessly into the layout while keeping the player engaged.
                   </p>
-                  <div className="mb-8 select-none">
-                    <a
-                      href="https://github.com/kupicake/database/tree/HERO-SECTION/3.%20DEADLINER/aset"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-[#E5E2DC] hover:border-[#F05C3B] hover:text-[#F05C3B] text-[#5a564e] bg-white transition-all duration-300 font-mono text-[10px] tracking-wider uppercase font-medium shadow-3xs cursor-pointer"
-                    >
-                      <Github className="w-4 h-4" />
-                      <span>View Deadliner Game Assets</span>
-                    </a>
-                  </div>
                 </div>
               )
             ) : null}
@@ -2743,67 +2850,285 @@ export default function ProjectCasePage({
             )}
           </div>
 
-          {/* PREVIOUS / NEXT FOOTER ROW */}
-          <div className="bg-[#FAF9F5] border-b border-[#E5E2DC] py-2 lg:py-4 flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-[#E5E2DC] justify-stretch">
-            <button
-              onClick={onPrev}
-              className="flex-1 p-6 md:p-8 flex flex-col items-start hover:bg-[#F3F1EC] transition-all bg-transparent group cursor-pointer text-left"
-            >
-              <span className="font-mono text-[8px] md:text-[9px] text-[#AE9E8E] uppercase tracking-widest block mb-1.5 mb-2 transition-transform group-hover:-translate-x-1">
-                [ ⟵ PREV CASE STUDY ]
-              </span>
-              <span className="font-sans text-lg md:text-xl font-normal tracking-tight text-[#161616]">
-                Go back to previous project details.
-              </span>
-            </button>
-
-            <button
-              onClick={onNext}
-              className="flex-1 p-6 md:p-8 flex flex-col items-end hover:bg-[#F3F1EC] transition-all bg-transparent group cursor-pointer text-right"
-            >
-              <span className="font-mono text-[8px] md:text-[9px] text-[#F05C3B] uppercase tracking-widest block mb-1.5 mb-2 transition-transform group-hover:translate-x-1">
-                [ NEXT CASE STUDY ⟶ ]
-              </span>
-              <span className="font-sans text-lg md:text-xl font-normal tracking-tight text-[#161616]">
-                Navigate forward to next work.
-              </span>
-            </button>
-          </div>
-
-          {/* BACK TO PORTFOLIO ACTION BLOCK */}
-          <div className="bg-[#FAF9F5] py-24 px-8 md:px-16 flex flex-col justify-center items-center text-center">
-            <div className="w-1.5 h-1.5 bg-[#F05C3B] rounded-full animate-bounce mb-6" />
-            <span className="text-[10px] font-mono tracking-[0.4em] text-[#AE9E8E] uppercase mb-3 block select-none">
-              STUDIO ENDINGS
-            </span>
-            <h2 className="text-2xl md:text-4xl font-normal leading-tight tracking-tight text-[#161616] max-w-lg mb-8">
-              Want to see more curated design explorations?
-            </h2>
-            <button
-              onClick={onBack}
-              className="group inline-flex items-center gap-5 px-8 py-3.5 rounded-full border-2 border-[#161616] hover:bg-[#161616] hover:text-white transition-all duration-300 text-xs md:text-sm tracking-widest font-bold text-[#161616] bg-transparent cursor-pointer uppercase"
-            >
-              <span>Back To Main Grid Portfolio</span>
-              <ArrowUpRight className="w-4 h-4 transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
-            </button>
-          </div>
-
         </div>
 
         {/* Right column margin */}
-        <div className="bg-[#FAF9F5] min-h-screen col-start-3 col-end-4 row-start-1 flex flex-col justify-between py-12 items-center text-[#8c8275] border-l border-[#E5E2DC]/30">
-          <div className="text-[10px] font-mono tracking-widest uppercase -rotate-90 origin-right -translate-x-3 text-right mt-14 whitespace-nowrap">
-            GRID EDITION // © 2026
-          </div>
-          <button 
-            onClick={onBack}
-            className="w-10 h-10 flex items-center justify-center rounded-full border border-[#E5E2DC] hover:border-[#F05C3B] hover:text-[#F05C3B] transition-colors cursor-pointer"
-            title="Return to home grid"
+        <div className="bg-[#FAF9F5] h-full col-start-3 col-end-4 row-start-1 flex flex-col justify-between py-12 items-center text-[#8c8275] border-l border-[#E5E2DC]/30">
+        </div>
+
+      </div>
+
+      {/* PREVIOUS / NEXT FOOTER ROW */}
+      <div className="w-full grid lg:grid-cols-[85px_1fr_85px] grid-cols-[55px_1fr_55px] gap-[1px] bg-[#E5E2DC] border-b border-[#E5E2DC]">
+        {/* Left column margin */}
+        <div className="bg-[#FAF9F5] h-full border-r border-[#E5E2DC]/30" />
+        
+        {/* Center column */}
+        <div className="bg-[#FAF9F5] col-start-2 col-end-3 flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-[#E5E2DC] justify-stretch">
+          <button
+            onClick={onPrev}
+            className="flex-1 p-6 md:p-8 flex flex-col items-start hover:bg-[#F3F1EC] transition-all bg-transparent group cursor-pointer text-left"
           >
-            ←
+            <span className="font-mono text-[8px] md:text-[9px] text-[#AE9E8E] uppercase tracking-widest block mb-1.5 mb-2 transition-transform group-hover:-translate-x-1">
+              [ ⟵ PREV CASE STUDY ]
+            </span>
+            <span className="font-sans text-lg md:text-xl font-normal tracking-tight text-[#161616]">
+              Go back to previous project details.
+            </span>
+          </button>
+
+          <button
+            onClick={onNext}
+            className="flex-1 p-6 md:p-8 flex flex-col items-end hover:bg-[#F3F1EC] transition-all bg-transparent group cursor-pointer text-right"
+          >
+            <span className="font-mono text-[8px] md:text-[9px] text-[#F05C3B] uppercase tracking-widest block mb-1.5 mb-2 transition-transform group-hover:translate-x-1">
+              [ NEXT CASE STUDY ⟶ ]
+            </span>
+            <span className="font-sans text-lg md:text-xl font-normal tracking-tight text-[#161616]">
+              Navigate forward to next work.
+            </span>
           </button>
         </div>
 
+        {/* Right column margin */}
+        <div className="bg-[#FAF9F5] h-full border-l border-[#E5E2DC]/30" />
+      </div>
+      </div>
+
+      {/* --- Section 5: Contact (Grid Style) --- */}
+      <div
+        id="contact"
+        className="group/contact w-full min-h-screen lg:h-screen bg-[#E5E2DC] grid lg:grid-cols-[85px_1fr_85px] grid-cols-[55px_1fr_55px] auto-rows-auto gap-[1px] scroll-mt-[55px] lg:scroll-mt-[85px] sticky bottom-0 z-0"
+        style={{
+          transform: `translateY(${contactParallaxY}px)`,
+          opacity: contactOpacity,
+          visibility: isContactVisible ? "visible" : "hidden",
+          willChange: "transform, opacity",
+        }}
+      >
+        {/* Left Grid Margin */}
+        <div className="bg-[#faf9f5] col-start-1 col-end-2 row-start-1 transition-colors duration-500" />
+
+        {/* Center Content */}
+        <div className="bg-[#faf9f5] col-start-2 col-end-3 row-start-1 pt-16 lg:pt-20 pb-0 flex flex-col justify-between items-start w-full min-h-screen lg:h-screen transition-colors duration-500">
+          {/* Section Header */}
+          <div className="w-full flex justify-between items-baseline px-6 md:px-12 lg:px-16 mb-4 xl:mb-6 shrink-0">
+            <h2
+              ref={contactTitleRef}
+              className="font-bold text-[10px] md:text-xs tracking-[0.4em] md:tracking-[0.6em] uppercase"
+            >
+              <span
+                style={{
+                  backgroundImage: `linear-gradient(to right, #161616 ${Math.min(100, contactTitleProgress * 100)}%, #b5b5b0 ${Math.min(100, contactTitleProgress * 100)}%)`,
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                  color: "transparent",
+                }}
+              >
+                GET IN TOUCH
+              </span>
+            </h2>
+            <span className="font-mono text-[9px] text-[#F05C3B]/60 tracking-wider font-light uppercase hidden md:inline">
+              COLLABORATION &bull; DIRECT CHANNELS
+            </span>
+          </div>
+
+          {/* Bottom Statement Footer (now swapped to top) */}
+          <div className="flex-1 w-full flex justify-center items-center bg-[#faf9f5] py-12 lg:py-16 px-4 sm:px-6 md:px-12 shrink-0 overflow-hidden">
+            <div className="group/statement flex flex-col items-center justify-center w-full max-w-7xl mx-auto cursor-default select-none">
+              {/* First line: LET'S + icon + WORK */}
+              <div className="flex flex-row items-center justify-center gap-x-2 sm:gap-x-4 md:gap-x-6 font-sans text-[26px] xs:text-4xl sm:text-6xl md:text-7xl lg:text-[90px] xl:text-[110px] font-normal leading-none tracking-tight text-[#161616] whitespace-nowrap">
+                <span className="text-[#b5b5b0]">“</span>
+                <span>LET'S</span>
+                
+                {/* Centered kupicake icon */}
+                <span className="inline-flex items-center justify-center shrink-0">
+                  <span className="w-8 h-8 xs:w-11 xs:h-11 sm:w-16 sm:h-16 md:w-22 md:h-22 lg:w-[100px] lg:h-[100px] rounded-full flex items-center justify-center overflow-hidden transition-all duration-500 border border-[#E5E2DC] bg-white group-hover/statement:border-[#F05C3B]/60 shadow-xs group-hover/statement:scale-105">
+                    <img
+                      src="https://raw.githubusercontent.com/kupicake/database/HERO-SECTION/LOGO%20KUPICAKE/kupicake%20putih.svg"
+                      alt="Kupicake Logo"
+                      className="w-full h-full object-cover translate-y-[50%] group-hover/statement:translate-y-[35%] transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1.1)] group-hover/statement:scale-110"
+                      referrerPolicy="no-referrer"
+                    />
+                  </span>
+                </span>
+
+                <span>WORK</span>
+              </div>
+
+              {/* Second line: TOGETHER */}
+              <div className="mt-2 sm:mt-4 md:mt-6 font-sans text-[26px] xs:text-4xl sm:text-6xl md:text-7xl lg:text-[90px] xl:text-[110px] font-normal leading-none tracking-tight text-[#161616] whitespace-nowrap flex flex-row items-center justify-center">
+                <span className="text-[#F05C3B]">TOGETHER</span>
+                <span className="text-[#b5b5b0] ml-1 sm:ml-2 md:ml-3">”</span>
+              </div>
+              
+              <div className="mt-8 md:mt-12 flex flex-col items-center gap-3">
+                <span className="h-[1px] w-6 bg-[#161616]/10" />
+                <span className="text-[9px] lg:text-[10px] font-light tracking-[0.4em] lg:tracking-[0.5em] text-[#737370] uppercase">
+                  KUPI CAKE
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-[1px] bg-[#E5E2DC] border-t border-b border-[#E5E2DC] shrink-0">
+            {/* Box 1: Status & Info */}
+            <div className="bg-[#faf9f5] hover:bg-white transition-colors duration-500 p-6 md:p-8 lg:p-10 flex flex-col justify-between">
+              <div>
+                <span className="text-[#8a8a85] font-mono text-[10px] md:text-xs uppercase tracking-wider block mb-4">
+                  01 // AVAILABILITY
+                </span>
+                <h3 className="text-[#1a1a1a] font-normal text-2xl md:text-3xl lg:text-[40px] leading-tight mb-6">
+                  Open for new projects and remote collaborations.
+                </h3>
+              </div>
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 mt-8">
+                {/* Left: Location & Status */}
+                <div className="flex flex-col gap-1 font-mono text-[10px] md:text-xs text-[#5a5957]">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#10b981]" />
+                    <span className="text-[#10b981] font-bold tracking-widest uppercase">
+                      YOGYAKARTA, INDONESIA
+                    </span>
+                  </div>
+                  <span className="text-[#737370]">
+                    [ Worldwide delivery ]
+                  </span>
+                </div>
+
+                {/* Right: Capabilities */}
+                <div className="font-sans text-xs md:text-[13px] lg:text-sm text-[#737370] leading-relaxed text-left sm:text-right">
+                  <p>Branding & Visual Identity</p>
+                  <p>Narrative & Character Design</p>
+                  <p>Motion Graphics & 2D Movement</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Box 2: Actions & Details */}
+            <div className="bg-[#faf9f5] hover:bg-white transition-colors duration-500 p-6 md:p-8 lg:p-10 flex flex-col justify-between group/contact-box relative overflow-hidden">
+              <div>
+                <span className="text-[#8a8a85] font-mono text-[10px] md:text-xs uppercase tracking-wider block mb-4">
+                  02 // DIRECT INQUIRY
+                </span>
+                <div className="flex flex-col gap-4">
+                  <div className="group/email flex items-center gap-3 relative min-h-[48px]">
+                    <a
+                      href="mailto:riskirw17@gmail.com"
+                      className="text-[#1a1a1a] hover:text-[#F05C3B] font-normal text-2xl md:text-3xl lg:text-[40px] leading-tight text-left block break-all transition-colors duration-500 font-sans"
+                    >
+                      riskirw17@gmail.com
+                    </a>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        navigator.clipboard.writeText("riskirw17@gmail.com");
+                        setEmailCopied(true);
+                        setTimeout(() => setEmailCopied(false), 2000);
+                      }}
+                      className="p-2 rounded-full hover:bg-[#F05C3B]/10 text-[#737370] hover:text-[#F05C3B] cursor-pointer opacity-0 group-hover/email:opacity-100 focus:opacity-100 transition-all duration-300 flex items-center justify-center shrink-0 border border-[#E5E2DC]"
+                      title="Copy email to clipboard"
+                    >
+                      {emailCopied ? (
+                        <span className="text-xs font-mono text-[#F05C3B] uppercase tracking-wider animate-pulse whitespace-nowrap px-1">
+                          copied!
+                        </span>
+                      ) : (
+                        <Copy className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
+                  
+                  <div className="group/phone flex items-center gap-3 relative min-h-[36px]">
+                    <a
+                      href="https://wa.me/6289673731449"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[#737370] hover:text-[#F05C3B] font-normal text-xl md:text-2xl lg:text-[28px] leading-tight block transition-colors duration-500 font-sans"
+                    >
+                      +62 896 7373 1449
+                    </a>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        navigator.clipboard.writeText("+6289673731449");
+                        setPhoneCopied(true);
+                        setTimeout(() => setPhoneCopied(false), 2000);
+                      }}
+                      className="p-1.5 rounded-full hover:bg-[#F05C3B]/10 text-[#737370] hover:text-[#F05C3B] cursor-pointer opacity-0 group-hover/phone:opacity-100 focus:opacity-100 transition-all duration-300 flex items-center justify-center shrink-0 border border-[#E5E2DC]"
+                      title="Copy phone number to clipboard"
+                    >
+                      {phoneCopied ? (
+                        <span className="text-[10px] font-mono text-[#F05C3B] uppercase tracking-wider animate-pulse whitespace-nowrap px-1">
+                          copied!
+                        </span>
+                      ) : (
+                        <Copy className="w-3.5 h-3.5" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-row justify-between items-center w-full mt-8 flex-wrap gap-4 z-10 relative">
+                {/* Social Links on Left */}
+                <div className="flex items-center gap-3">
+                  {[
+                    {
+                      Icon: Instagram,
+                      href: "https://www.instagram.com/kupicake_/",
+                      label: "Instagram",
+                    },
+                    {
+                      imgSrc: "https://raw.githubusercontent.com/kupicake/database/HERO-SECTION/LOGO%20KUPICAKE/VGen%20Badge%20-%20outline.webp",
+                      href: "https://vgen.co/kupicake_",
+                      label: "VGen",
+                    },
+                    {
+                      Icon: Linkedin,
+                      href: "https://www.linkedin.com/in/riskirw17",
+                      label: "LinkedIn",
+                    },
+                  ].map(({ Icon, imgSrc, href, label }) => (
+                    <a
+                      key={label}
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={label}
+                      className="w-10 h-10 md:w-11 md:h-11 rounded-full border border-[#e5e2dc] bg-transparent hover:bg-[#F05C3B]/5 hover:border-[#F05C3B] hover:text-[#F05C3B] text-[#737370] transition-all duration-300 flex items-center justify-center group"
+                    >
+                      {imgSrc ? (
+                        <div className="relative w-4 h-4 md:w-5 md:h-5">
+                          <img 
+                            src={imgSrc} 
+                            alt={label} 
+                            className="absolute inset-0 w-full h-full object-contain vgen-icon-nav-idle opacity-100 group-hover:opacity-0 transition-opacity duration-300"
+                            referrerPolicy="no-referrer"
+                          />
+                          <img 
+                            src={imgSrc} 
+                            alt={label} 
+                            className="absolute inset-0 w-full h-full object-contain vgen-icon-nav-hover opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                            referrerPolicy="no-referrer"
+                          />
+                        </div>
+                      ) : (
+                        Icon && <Icon className="w-4 h-4 md:w-5 md:h-5 transition-colors duration-300" />
+                      )}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Grid Margin */}
+        <div className="bg-[#faf9f5] col-start-3 col-end-4 row-start-1 transition-colors duration-500" />
       </div>
     </div>
   );

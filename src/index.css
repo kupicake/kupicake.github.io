@@ -8,32 +8,36 @@
 }
 
 body {
-  background-color: #faf9f5;
+  background-color: #ffffff;
   color: #1a1a1a;
 }
 
-/* Responsive root font-size scaling to preserve proportions on wider desktop screens */
+html {
+  font-size: 90%; /* Default font-size reduced by 10% to scale down every element, spacing, and icon */
+}
+
+/* Responsive root font-size scaling to preserve proportions on wider desktop screens (reduced by 10%) */
 @media (min-width: 1440px) {
   html {
-    font-size: 15px;
+    font-size: 13.5px;
   }
 }
 
 @media (min-width: 1680px) {
   html {
-    font-size: 14px;
+    font-size: 12.6px;
   }
 }
 
 @media (min-width: 1920px) {
   html {
-    font-size: 13px;
+    font-size: 11.7px;
   }
 }
 
 @media (min-width: 2560px) {
   html {
-    font-size: 11.5px;
+    font-size: 10.35px;
   }
 }
 
