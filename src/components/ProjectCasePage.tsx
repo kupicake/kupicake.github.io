@@ -494,7 +494,7 @@ const Sample2Process = () => {
 
                 <div className="flex-grow">
                   <span className="font-mono text-[9px] uppercase tracking-widest text-[#AE9E8E] mb-2 font-medium flex items-center gap-2">
-                    <span>PHASE 0{idx + 1} // {step.phase}</span>
+                    <span>CREATIVE FOCUS 0{idx + 2} // {step.phase}</span>
                   </span>
                   <h4
                     className={`font-sans text-[#161616] text-base md:text-lg font-light leading-snug transition-all duration-400 ${
@@ -536,6 +536,8 @@ const CreativeProcess = ({ projectIndex }: { projectIndex?: number }) => {
   const pipelineTextRef = React.useRef<HTMLParagraphElement>(null);
   const stepsContainerRef = React.useRef<HTMLDivElement>(null);
   const leftColumnRef = React.useRef<HTMLDivElement>(null);
+  const rightColumnRef = React.useRef<HTMLDivElement>(null);
+  const isProgrammaticScrolling = React.useRef(false);
   const sectionRef = React.useRef<HTMLDivElement>(null);
   const stickyParentRef = React.useRef<HTMLDivElement>(null);
 
@@ -578,7 +580,7 @@ const CreativeProcess = ({ projectIndex }: { projectIndex?: number }) => {
         }
       }
       
-      if (!isHoveringStepsRef.current) {
+      if (window.innerWidth < 1024 && !isHoveringStepsRef.current) {
         const targetLine = window.scrollY + window.innerHeight * 0.5;
         let closestIdx = 0;
         let minDistance = Infinity;
@@ -612,19 +614,152 @@ const CreativeProcess = ({ projectIndex }: { projectIndex?: number }) => {
     };
   }, []);
 
-  const handleStepClick = (idx: number) => {
-    setActiveStep(idx);
-    const el = document.getElementById(`creative-step-${idx}`);
-    if (el) {
-      const rect = el.getBoundingClientRect();
-      const elementCenter = rect.top + window.scrollY + rect.height / 2;
-      const targetScrollY = elementCenter - window.innerHeight / 2;
-      window.scrollTo({
-        top: targetScrollY,
+  const lastScrollTime = React.useRef(0);
+
+  const handleMouseLeaveSection = () => {
+    if (window.innerWidth < 1024) return;
+    isHoveringStepsRef.current = false;
+    const container = rightColumnRef.current;
+    if (container) {
+      const spacerHeight = container.clientHeight || window.innerHeight;
+      setActiveStep(0);
+      container.scrollTo({
+        top: spacerHeight,
         behavior: "smooth"
       });
     }
   };
+
+  const scrollToStep = (idx: number) => {
+    setActiveStep(idx);
+    
+    if (window.innerWidth < 1024) {
+      const el = document.getElementById(`creative-step-${idx}`);
+      if (el) {
+        const rect = el.getBoundingClientRect();
+        const elementCenter = rect.top + window.scrollY + rect.height / 2;
+        const targetScrollY = elementCenter - window.innerHeight / 2;
+        window.scrollTo({
+          top: targetScrollY,
+          behavior: "smooth"
+        });
+      }
+    } else {
+      const container = rightColumnRef.current;
+      const el = document.getElementById(`creative-step-${idx}`);
+      if (container && el) {
+        isProgrammaticScrolling.current = true;
+        const containerTop = container.getBoundingClientRect().top;
+        const elTop = el.getBoundingClientRect().top;
+        const relativeTop = elTop - containerTop + container.scrollTop;
+        const targetTop = relativeTop - container.clientHeight / 2 + el.clientHeight / 2;
+        
+        container.scrollTo({
+          top: targetTop,
+          behavior: "smooth"
+        });
+        
+        const timer = setTimeout(() => {
+          isProgrammaticScrolling.current = false;
+        }, 600);
+        return () => clearTimeout(timer);
+      }
+    }
+  };
+
+  const handleRightColumnScroll = () => {
+    // No-op: changing phase is only affected by the cursor's touch/hover, not the scrolling
+  };
+
+  const handleStepClick = (idx: number) => {
+    scrollToStep(idx);
+  };
+
+  useEffect(() => {
+    const container = rightColumnRef.current;
+    if (container && window.innerWidth >= 1024) {
+      const alignTop = () => {
+        const height = container.clientHeight || window.innerHeight;
+        container.scrollTop = height;
+      };
+      
+      alignTop();
+      const timer = setTimeout(alignTop, 100);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
+  useEffect(() => {
+    const parent = stickyParentRef.current;
+    if (!parent) return;
+
+    const container = rightColumnRef.current;
+    if (!container) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      if (window.innerWidth < 1024) return;
+      const container = rightColumnRef.current;
+      if (!container) return;
+
+      const delta = e.deltaY;
+      const containerHeight = container.clientHeight;
+
+      // Find the first and last step elements to lock boundaries at their center positions
+      const el0 = document.getElementById("creative-step-0");
+      const el5 = document.getElementById(`creative-step-${creativeSteps.length - 1}`);
+
+      let center0 = 0;
+      let center5 = container.scrollHeight - containerHeight;
+
+      if (el0) {
+        center0 = el0.offsetTop - containerHeight / 2 + el0.clientHeight / 2;
+      }
+      if (el5) {
+        center5 = el5.offsetTop - containerHeight / 2 + el5.clientHeight / 2;
+      }
+
+      // Reduce scroll sensitivity a little bit as requested (multiplier < 1.0)
+      const sensitivity = 0.75;
+      const adjustedDelta = delta * sensitivity;
+
+      if (delta > 0) {
+        // Scrolling down
+        // Lock scroll and scroll container until Phase 06 is centered
+        const remaining = center5 - container.scrollTop;
+        if (remaining > 0.1) {
+          e.preventDefault();
+          e.stopPropagation();
+          const amount = Math.min(adjustedDelta, remaining);
+          container.scrollBy({ top: amount, behavior: "auto" });
+        } else {
+          // Phase 06 is centered or passed. Unlock scroll and let the outer page scroll down.
+          e.preventDefault();
+          e.stopPropagation();
+          window.scrollBy({ top: delta, behavior: "auto" });
+        }
+      } else if (delta < 0) {
+        // Scrolling up
+        // Lock scroll and scroll container until Phase 01 is centered
+        const remaining = center0 - container.scrollTop; // negative since scrollTop > center0
+        if (remaining < -0.1) {
+          e.preventDefault();
+          e.stopPropagation();
+          const amount = Math.max(adjustedDelta, remaining); // both are negative, max gets the one closer to 0
+          container.scrollBy({ top: amount, behavior: "auto" });
+        } else {
+          // Phase 01 is centered or passed. Unlock scroll and let the outer page scroll up.
+          e.preventDefault();
+          e.stopPropagation();
+          window.scrollBy({ top: delta, behavior: "auto" });
+        }
+      }
+    };
+
+    parent.addEventListener("wheel", handleWheel, { passive: false });
+    return () => {
+      parent.removeEventListener("wheel", handleWheel);
+    };
+  }, []);
 
   const windowHeight = typeof window !== "undefined" ? window.innerHeight : 0;
   let pipelineHeadingProgress = 0;
@@ -701,11 +836,14 @@ const CreativeProcess = ({ projectIndex }: { projectIndex?: number }) => {
       {/* Scrollable Container Wrapper with sticky content */}
       <div ref={stickyParentRef} className="relative w-full bg-[#FAF9F5] border-b border-[#E5E2DC]">
         {/* Split Columns Side-by-Side with Border line separator - left sticky, right scrolls */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 relative w-full">
+        <div 
+          onMouseLeave={handleMouseLeaveSection}
+          className="grid grid-cols-1 lg:grid-cols-2 gap-0 relative w-full lg:aspect-[2/1] overflow-hidden"
+        >
           {/* Left Column Track (Stretches to match the tall right column) */}
-          <div className="w-full border-b lg:border-b-0 lg:border-r border-[#E5E2DC] relative">
+          <div className="w-full h-full border-b lg:border-b-0 lg:border-r border-[#E5E2DC] relative bg-neutral-950">
             {/* Left Sticky Column: Media Presentation */}
-            <div ref={leftColumnRef} className="w-full h-[50vh] lg:h-[calc(100vh-160px)] lg:sticky lg:top-[120px] z-10 overflow-hidden relative group select-none bg-neutral-950">
+            <div ref={leftColumnRef} className="w-full h-full overflow-hidden relative group select-none bg-neutral-950">
             
             {/* Retro Viewport Grid & Outlines */}
             <div className="absolute inset-0 pointer-events-none border-4 border-[#161616]/10 z-20" />
@@ -785,7 +923,9 @@ const CreativeProcess = ({ projectIndex }: { projectIndex?: number }) => {
 
         {/* Right Column: Descriptions */}
           <div 
-            className="flex flex-col w-full bg-transparent pt-12 pb-32 lg:pb-[80vh]"
+            ref={rightColumnRef}
+            onScroll={handleRightColumnScroll}
+            className="flex flex-col w-full h-full bg-transparent overflow-y-auto scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden pt-0 pb-0"
             onMouseEnter={() => {
               isHoveringStepsRef.current = true;
             }}
@@ -793,6 +933,8 @@ const CreativeProcess = ({ projectIndex }: { projectIndex?: number }) => {
               isHoveringStepsRef.current = false;
             }}
           >
+            {/* Top spacer so the first step can scroll down below the viewport */}
+            <div className="hidden lg:block lg:h-full shrink-0" />
             {creativeSteps.map((step, idx) => {
               const isActive = activeStep === idx;
               return (
@@ -805,7 +947,7 @@ const CreativeProcess = ({ projectIndex }: { projectIndex?: number }) => {
                       setActiveStep(idx);
                     }
                   }}
-                  className={`group/step py-24 px-5 md:py-28 md:px-8 lg:py-36 lg:px-14 border-b border-[#E5E2DC] last:border-b-0 cursor-pointer flex gap-6 md:gap-8 transition-all duration-500 items-start ${
+                  className={`group/step py-8 px-5 md:py-10 md:px-8 lg:py-14 lg:px-14 border-b border-[#E5E2DC] last:border-b-0 cursor-pointer flex gap-6 md:gap-8 transition-all duration-500 items-start ${
                     isActive ? "bg-white/70 opacity-100" : "bg-transparent opacity-40 hover:opacity-75"
                   }`}
                 >
@@ -849,6 +991,8 @@ const CreativeProcess = ({ projectIndex }: { projectIndex?: number }) => {
                 </div>
               );
             })}
+            {/* Bottom spacer so the last step can be centered */}
+            <div className="hidden lg:block lg:h-full shrink-0" />
           </div>
         </div>
       </div>
@@ -1042,6 +1186,49 @@ const conceptWordsDeadliner = [
   { w: "to", h: false },
   { w: "test", h: false },
   { w: "him.", h: false },
+];
+
+const contributionWordsDeadliner = [
+  { w: "I", h: false },
+  { w: "collaborated", h: false },
+  { w: "on", h: false },
+  { w: "designing", h: false },
+  { w: "the", h: false },
+  { w: "main", h: false },
+  { w: "character,", h: false },
+  { w: "Dudung,", h: "orange" },
+  { w: "creating", h: false },
+  { w: "his", h: false },
+  { w: "full-body", h: false },
+  { w: "turnarounds,", h: false },
+  { w: "expressive", h: false },
+  { w: "gameplay", h: false },
+  { w: "sprites,", h: false },
+  { w: "and", h: false },
+  { w: "a", h: false },
+  { w: "custom", h: false },
+  { w: "animated", h: false },
+  { w: "title", h: false },
+  { w: "screen.", h: false },
+  { w: "Alongside", h: false, p2: true },
+  { w: "character", h: false },
+  { w: "art,", h: false },
+  { w: "I", h: false },
+  { w: "developed", h: false },
+  { w: "a", h: false },
+  { w: "modular", h: false },
+  { w: "system", h: false },
+  { w: "of", h: false },
+  { w: "background", h: false },
+  { w: "assets,", h: false },
+  { w: "buildings,", h: false },
+  { w: "and", h: false },
+  { w: "flora", h: false },
+  { w: "for", h: false },
+  { w: "the", h: false },
+  { w: "2D", h: "orange" },
+  { w: "platformer", h: "orange" },
+  { w: "world.", h: false }
 ];
 
 const pipelineWords = [
@@ -1301,10 +1488,12 @@ export default function ProjectCasePage({
   // Concept section scroll anim refs (calculated dynamically on each render linked with scrollY/localScrollY)
   const theConceptRef = React.useRef<HTMLDivElement>(null);
   const conceptHeadingRef = React.useRef<HTMLHeadingElement>(null);
+  const contributionTextRef = React.useRef<HTMLDivElement>(null);
 
   const windowHeight = typeof window !== "undefined" ? window.innerHeight : 0;
   let conceptHeadingProgress = 0;
   let conceptTextProgress = 0;
+  let contributionTextProgress = 0;
 
   if (conceptHeadingRef.current && windowHeight > 0) {
     const rect = conceptHeadingRef.current.getBoundingClientRect();
@@ -1318,6 +1507,13 @@ export default function ProjectCasePage({
     const startY = windowHeight * 0.85;
     const endY = windowHeight * 0.35;
     conceptTextProgress = Math.max(0, Math.min(1, (startY - rect.top) / (startY - endY)));
+  }
+
+  if (contributionTextRef.current && windowHeight > 0) {
+    const rect = contributionTextRef.current.getBoundingClientRect();
+    const startY = windowHeight * 0.85;
+    const endY = windowHeight * 0.35;
+    contributionTextProgress = Math.max(0, Math.min(1, (startY - rect.top) / (startY - endY)));
   }
 
   const contactTitleRef = React.useRef<HTMLHeadingElement>(null);
@@ -1412,6 +1608,7 @@ export default function ProjectCasePage({
 
   const [currentTopRightIdx, setCurrentTopRightIdx] = useState(0);
   const [isTopLeftClicked, setIsTopLeftClicked] = useState(false);
+  const [currentPlatformBgIdx, setCurrentPlatformBgIdx] = useState(0);
 
   const topRightImages = [
     "https://raw.githubusercontent.com/kupicake/database/HERO-SECTION/3.%20DEADLINER/aset/1.%20sketsa.webp",
@@ -1421,12 +1618,24 @@ export default function ProjectCasePage({
     "https://raw.githubusercontent.com/kupicake/database/HERO-SECTION/3.%20DEADLINER/3.%20DEADLINER/6.%20lighting.webp"
   ];
 
+  const platformBgImages = [
+    "https://raw.githubusercontent.com/kupicake/database/HERO-SECTION/3.%20DEADLINER/platform%20background/1-3%20-%20susun(1).webp",
+    "https://raw.githubusercontent.com/kupicake/database/HERO-SECTION/3.%20DEADLINER/platform%20background/1-3%20-%20susun(2).webp",
+    "https://raw.githubusercontent.com/kupicake/database/HERO-SECTION/3.%20DEADLINER/platform%20background/1-3%20-%20susun(3).webp"
+  ];
+
   useEffect(() => {
     if (projectIndex !== 2) return;
-    const interval = setInterval(() => {
+    const intervalTopRight = setInterval(() => {
       setCurrentTopRightIdx((prev) => (prev + 1) % 5);
     }, 2000);
-    return () => clearInterval(interval);
+    const intervalPlatformBg = setInterval(() => {
+      setCurrentPlatformBgIdx((prev) => (prev + 1) % 3);
+    }, 5000);
+    return () => {
+      clearInterval(intervalTopRight);
+      clearInterval(intervalPlatformBg);
+    };
   }, [projectIndex]);
 
   const handleCopyColor = (color: string) => {
@@ -2102,8 +2311,8 @@ export default function ProjectCasePage({
                   </div>
                 </div>
               ) : (
-                <div className="p-6 md:p-10 lg:p-14 pb-0 select-none">
-                  <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-4 w-full border-b border-[#E5E2DC]/80 pb-3 mb-4">
+                <div className="py-24 md:py-32 px-6 md:px-10 select-none">
+                  <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-4 w-full border-b border-[#E5E2DC]/80 pb-3 mb-8 md:mb-12">
                     <h2 className="font-bold text-xs md:text-sm tracking-[0.4em] md:tracking-[0.6em] uppercase text-[#161616]">
                       MY CONTRIBUTION
                     </h2>
@@ -2111,9 +2320,34 @@ export default function ProjectCasePage({
                       05 // CORE CHARACTER DESIGN • ENVIRONMENT ART • MODULAR SYSTEM
                     </span>
                   </div>
-                  <p className="text-[#5a564e] text-xs md:text-sm font-light leading-relaxed select-text mt-4 mb-8">
-                    For the game’s core visual development, I collaborated on the design of the main character, Dudung, creating full-body turnarounds and expressive sprites that convey his personality during gameplay, including a custom animated title screen of him working late into the night to set the game's relatable tone. Alongside character design, I established the environment for the 2D platformer world by creating a modular system of background assets, buildings, and environmental flora that fit seamlessly into the layout while keeping the player engaged.
-                  </p>
+                  <div ref={contributionTextRef} className="w-full select-text">
+                    <p className="text-xl md:text-3xl lg:text-[38px] xl:text-[40px] font-normal leading-[1.2] md:leading-[1.15] tracking-tight text-[#161616]/40">
+                      {contributionWordsDeadliner.map((word, i) => {
+                        const fillPercentage = Math.max(
+                          0,
+                          Math.min(100, (contributionTextProgress * contributionWordsDeadliner.length - i) * 100),
+                        );
+                        const targetColor = word.h === "orange" ? "#F05C3B" : "#161616";
+                        return (
+                          <span key={`contrib-${i}-${word.w}`}>
+                            <span
+                              className="font-normal"
+                              style={{
+                                backgroundImage: `linear-gradient(to right, ${targetColor} ${fillPercentage}%, #b5b5b0 ${fillPercentage}%)`,
+                                WebkitBackgroundClip: "text",
+                                WebkitTextFillColor: "transparent",
+                                backgroundClip: "text",
+                                color: "transparent",
+                              }}
+                            >
+                              {word.w}
+                            </span>
+                            {i < contributionWordsDeadliner.length - 1 && " "}
+                          </span>
+                        );
+                      })}
+                    </p>
+                  </div>
                 </div>
               )
             ) : null}
@@ -2682,14 +2916,14 @@ export default function ProjectCasePage({
                   }
                 `}} />
 
-                <div className="relative w-[calc(100%+3rem)] md:w-[calc(100%+5rem)] lg:w-[calc(100%+7rem)] -mx-6 md:-mx-10 lg:-mx-14 border-y border-[#E5E2DC] overflow-hidden bg-[#E5E2DC] gap-[1px] grid grid-cols-1 md:grid-cols-12 md:grid-rows-[680px_480px] select-none">
-                  {/* Image 1: Column start 1, span 3, row span 1 */}
+                <div className="relative w-[calc(100%+3rem)] md:w-[calc(100%+5rem)] lg:w-[calc(100%+7rem)] -mx-6 md:-mx-10 lg:-mx-14 border-t border-b border-[#E5E2DC] overflow-hidden bg-[#E5E2DC] gap-[1px] grid grid-cols-1 md:grid-cols-[3fr_8fr] md:aspect-[22/9] select-none">
+                  {/* Image 1: Portrait character sketches (2:3 aspect ratio) */}
                   <div 
                     onClick={() => setIsTopLeftClicked(!isTopLeftClicked)}
-                    className="md:col-start-1 md:col-end-4 md:row-start-1 md:row-end-2 h-[580px] md:h-full relative overflow-hidden group/scene bg-[#FAF9F5] cursor-pointer"
+                    className="h-[450px] md:h-full relative overflow-hidden group/scene bg-white cursor-pointer"
                   >
                     <div 
-                      className="absolute inset-0 transition-opacity duration-[800ms] ease-in-out" 
+                       className="absolute inset-0 transition-opacity duration-[800ms] ease-in-out bg-white" 
                       style={{ opacity: isTopLeftClicked ? 0 : 1, zIndex: isTopLeftClicked ? 0 : 1 }}
                     >
                       <img 
@@ -2701,7 +2935,7 @@ export default function ProjectCasePage({
                       />
                     </div>
                     <div 
-                      className="absolute inset-0 transition-opacity duration-[800ms] ease-in-out" 
+                       className="absolute inset-0 transition-opacity duration-[800ms] ease-in-out bg-white" 
                       style={{ opacity: isTopLeftClicked ? 1 : 0, zIndex: isTopLeftClicked ? 1 : 0 }}
                     >
                       <img 
@@ -2719,12 +2953,12 @@ export default function ProjectCasePage({
                     </div>
                   </div>
 
-                  {/* Image 3: Column start 4, span 9, row span 1 */}
-                  <div className="md:col-start-4 md:col-end-13 md:row-start-1 md:row-end-2 h-[480px] md:h-full relative overflow-hidden group/scene bg-[#FAF9F5]">
+                  {/* Image 3: Landscape room progress stages (16:9 aspect ratio) */}
+                  <div className="h-[380px] md:h-full relative overflow-hidden group/scene bg-white">
                     {topRightImages.map((src, idx) => (
                       <div 
                         key={idx}
-                        className="absolute inset-0 transition-opacity duration-1000 ease-in-out"
+                        className="absolute inset-0 transition-opacity duration-1000 ease-in-out bg-white"
                         style={{ 
                           opacity: currentTopRightIdx === idx ? 1 : 0, 
                           zIndex: currentTopRightIdx === idx ? 1 : 0 
@@ -2750,16 +2984,33 @@ export default function ProjectCasePage({
                       }</span>
                     </div>
                   </div>
+                </div>
 
-                  {/* Image 4 (Represented as Image 2 in sequence visually): Column start 1, span 12, row span 1 */}
-                  <div className="md:col-start-1 md:col-end-13 md:row-start-2 md:row-end-3 h-[360px] md:h-full relative overflow-hidden group/scene bg-[#FAF9F5]">
-                    <img 
-                      src={deadlinerAssets[3].url} 
-                      alt={deadlinerAssets[3].name}
-                      referrerPolicy="no-referrer"
-                      loading="lazy"
-                      className="w-full h-full object-cover origin-center animate-cinematic-pan"
-                    />
+                {/* Row 2: Rotating platform background layers (increased size by 25%) */}
+                <div className="relative w-[calc(100%+3rem)] md:w-[calc(100%+5rem)] lg:w-[calc(100%+7rem)] -mx-6 md:-mx-10 lg:-mx-14 border-b border-[#E5E2DC] overflow-hidden bg-[#FAF9F5] h-[225px] md:h-[300px] select-none">
+                  {platformBgImages.map((src, idx) => (
+                    <div 
+                      key={idx}
+                      className="absolute inset-0 transition-opacity duration-1000 ease-in-out bg-[#FAF9F5]"
+                      style={{ 
+                        opacity: currentPlatformBgIdx === idx ? 1 : 0, 
+                        zIndex: currentPlatformBgIdx === idx ? 1 : 0 
+                      }}
+                    >
+                      <img 
+                        src={src} 
+                        alt={`Deadliner Platform Background Layer ${idx + 1}`}
+                        referrerPolicy="no-referrer"
+                        loading="lazy"
+                        className="w-full h-full object-cover"
+                        style={{ objectPosition: "5% center" }}
+                      />
+                    </div>
+                  ))}
+                  {/* Layer indicator pill */}
+                  <div className="absolute top-4 right-4 bg-[#161616]/95 border border-[#E5E2DC]/10 px-3 py-1.5 rounded text-[9px] font-mono tracking-wider text-white uppercase shadow-md select-none flex items-center gap-1.5 z-10">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#F05C3B] animate-pulse" />
+                    <span>platform bg {currentPlatformBgIdx + 1}/3</span>
                   </div>
                 </div>
               </div>

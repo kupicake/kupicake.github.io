@@ -271,7 +271,7 @@ const ALL_PRELOAD_IMAGES = [
 ];
 
 export default function App() {
-  const [isSoundOn, setIsSoundOn] = useState(false);
+  const [isSoundOn, setIsSoundOn] = useState(true);
   const [hasInteracted, setHasInteracted] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [assetsPreloaded, setAssetsPreloaded] = useState(false);
@@ -1236,7 +1236,7 @@ export default function App() {
 
       {/* FIXED FLOATING UI */}
       <div
-        className={`fixed inset-0 pointer-events-none z-[1002] transition-colors duration-500`}
+        className={`fixed inset-0 pointer-events-none z-[1002] transition-all duration-700 ${!isFullyLoaded ? "opacity-0 pointer-events-none" : "opacity-100"}`}
       >
         {/* Top Left - Logo */}
         <div className={`absolute top-0 left-0 ${headerBoxClass} flex items-center justify-center pointer-events-auto bg-transparent transition-all duration-300`}>
