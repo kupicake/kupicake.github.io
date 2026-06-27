@@ -146,11 +146,9 @@ const Sample2Process = () => {
   const [localScrollY, setLocalScrollY] = useState(0);
   const [scrolledEnd, setScrolledEnd] = useState(false);
   const [viewedPhases, setViewedPhases] = useState<number[]>([0]);
-  const [viewMode, setViewMode] = useState<"concept" | "colored">("concept");
+  const [viewMode, setViewMode] = useState<"concept" | "final">("concept");
 
   const sectionRef = React.useRef<HTMLDivElement>(null);
-  const pipelineHeadingRef = React.useRef<HTMLHeadingElement>(null);
-  const pipelineTextRef = React.useRef<HTMLParagraphElement>(null);
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
 
   const isDown = React.useRef(false);
@@ -340,79 +338,8 @@ const Sample2Process = () => {
     }
   };
 
-  const windowHeight = typeof window !== "undefined" ? window.innerHeight : 0;
-  let pipelineHeadingProgress = 0;
-  let pipelineTextProgress = 0;
-
-  if (pipelineHeadingRef.current && windowHeight > 0) {
-    const rect = pipelineHeadingRef.current.getBoundingClientRect();
-    const startY = windowHeight * 0.95;
-    const endY = windowHeight * 0.45;
-    pipelineHeadingProgress = Math.max(0, Math.min(1, (startY - rect.top) / (startY - endY)));
-  }
-
-  if (pipelineTextRef.current && windowHeight > 0) {
-    const rect = pipelineTextRef.current.getBoundingClientRect();
-    const startY = windowHeight * 0.85;
-    const endY = windowHeight * 0.35;
-    pipelineTextProgress = Math.max(0, Math.min(1, (startY - rect.top) / (startY - endY)));
-  }
-
-  const currentPipelineWords = activeStep > 0 ? pipelineWordsStoryboard : pipelineWordsSample2;
-
   return (
     <div className="w-full bg-[#FAF9F5] border-t border-[#E5E2DC]" ref={sectionRef}>
-      <div 
-        className="bg-[#FAF9F5] border-b border-[#E5E2DC] py-24 md:py-32 px-6 md:px-10 flex flex-col justify-center items-start w-full"
-      >
-        <div ref={pipelineHeadingRef} className="w-full flex justify-between items-baseline mb-8 md:mb-12">
-          <h2 className="font-bold text-xs md:text-sm tracking-[0.4em] md:tracking-[0.6em] uppercase text-[#161616]">
-            <span
-              style={{
-                backgroundImage: `linear-gradient(to right, #333333 ${Math.min(100, pipelineHeadingProgress * 100)}%, #b5b5b0 ${Math.min(100, pipelineHeadingProgress * 100)}%)`,
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-                color: "transparent",
-              }}
-            >
-              {activeStep > 0 ? "STORYBOARD" : "VISUAL PIPELINE"}
-            </span>
-          </h2>
-          <span className="font-mono text-[9px] text-[#F05C3B]/60 tracking-wider font-light uppercase hidden md:inline">
-            {activeStep > 0 ? "05 // STORYBOARD SECTIONS SEQUENCE" : "05 // STORY PRODUCTION & DESIGN COMPOSITION"}
-          </span>
-        </div>
-        <p 
-          ref={pipelineTextRef}
-          className="text-xl md:text-3xl lg:text-[38px] xl:text-[40px] font-normal leading-[1.1] md:leading-[1.15] tracking-tight text-[#161616]/40 select-text w-full"
-        >
-          {currentPipelineWords.map((word, i) => {
-            const fillPercentage = Math.max(
-              0,
-              Math.min(100, (pipelineTextProgress * currentPipelineWords.length - i) * 100),
-            );
-            const targetColor = word.h ? "#F05C3B" : "#333333";
-            return (
-              <span key={`${activeStep}-${i}-${word.w}`}>
-                <span
-                  style={{
-                    backgroundImage: `linear-gradient(to right, ${targetColor} ${fillPercentage}%, #b5b5b0 ${fillPercentage}%)`,
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
-                    backgroundClip: "text",
-                    color: "transparent",
-                  }}
-                >
-                  {word.w}
-                </span>
-                {i < currentPipelineWords.length - 1 && " "}
-              </span>
-            );
-          })}
-        </p>
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 relative w-full bg-[#FAF9F5] border-b border-[#E5E2DC]">
         {/* Left Column: Media Presentation, now internally scrollable with static overlay HUD and full-screen alignment */}
         <div 
@@ -423,14 +350,14 @@ const Sample2Process = () => {
           {/* Subtle status feed label in top left - elevated for maximum visual clarity & professional contrast */}
           <div className="absolute top-4 left-4 z-30 pointer-events-none flex flex-col gap-1.5 matches-layer animate-fade-in select-none">
             <span className="font-mono text-[7.5px] text-white tracking-[0.25em] uppercase bg-black px-2.5 py-1.5 rounded-sm border border-white/20 shadow-lg backdrop-blur-md">
-              MAPPED VIEW // {viewMode === "concept" ? "1. CONCEPT DRAFT" : "2. COLOURED ART"}
+              MAPPED VIEW // {viewMode === "concept" ? "1. CONCEPT DRAFT" : "2. FINAL ART"}
             </span>
             <span className={`font-mono text-[9px] tracking-[0.18em] uppercase px-3 py-1.5 rounded-sm shadow-2xl font-black transition-all duration-500 ${
               viewMode === "concept" 
                 ? "bg-amber-400 text-black border border-amber-300" 
                 : "bg-emerald-400 text-black border border-emerald-300"
             }`}>
-              {viewMode === "concept" ? "✦ CONCEPT BY KUPICAKE" : "✦ COLOR & FINISHING BY 090UCU"}
+              {viewMode === "concept" ? "✦ CONCEPT BY KUPICAKE" : "✦ FINAL BY 090UCU"}
             </span>
           </div>
 
@@ -447,14 +374,14 @@ const Sample2Process = () => {
               Concept
             </button>
             <button
-              onClick={() => setViewMode("colored")}
+              onClick={() => setViewMode("final")}
               className={`px-3 py-1.5 text-[8.5px] font-mono uppercase tracking-wider rounded-full transition-all duration-300 ${
-                viewMode === "colored"
+                viewMode === "final"
                   ? "bg-[#F05C3B] text-white font-extrabold shadow-md scale-105"
                   : "text-white/70 hover:text-white"
               }`}
             >
-              Colored
+              Final
             </button>
           </div>
 
@@ -494,9 +421,9 @@ const Sample2Process = () => {
                     {/* Colored Artwork Custom Overlay */}
                     <img
                       src={step.coloredUrl}
-                      alt={`${step.title} Colored`}
+                      alt={`${step.title} Final`}
                       className="absolute top-0 left-0 w-full h-auto object-contain select-none pointer-events-none transition-opacity duration-700 ease-in-out"
-                      style={{ opacity: viewMode === "colored" ? 1 : 0 }}
+                      style={{ opacity: viewMode === "final" ? 1 : 0 }}
                       referrerPolicy="no-referrer"
                       loading="eager"
                     />
@@ -551,22 +478,16 @@ const Sample2Process = () => {
                 }`}
               >
                 <div className="flex flex-col items-center pt-1 shrink-0 select-none w-6">
-                  {isCompleted ? (
-                    <div className="w-5 h-5 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-500 text-[10px] font-bold shrink-0 animate-pulse">
-                      ✓
-                    </div>
-                  ) : (
-                    <span
-                      className={`font-mono text-xs md:text-sm font-bold transition-colors duration-400 w-5 text-center ${
-                        isActive ? "text-[#F05C3B]" : "text-[#AE9E8E]"
-                      }`}
-                    >
-                      {step.num}
-                    </span>
-                  )}
+                  <span
+                    className={`font-mono text-xs md:text-sm font-bold transition-colors duration-400 w-5 text-center ${
+                      isActive ? "text-[#F05C3B]" : "text-[#AE9E8E]"
+                    }`}
+                  >
+                    {step.num}
+                  </span>
                   <div
                     className={`w-[1px] bg-gradient-to-b transition-all duration-500 mt-2 ${
-                      isActive ? (isCompleted ? "from-emerald-500 to-transparent h-16" : "from-[#F05C3B] to-transparent h-16") : "from-transparent to-transparent h-8"
+                      isActive ? "from-[#F05C3B] to-transparent h-16" : "from-transparent to-transparent h-8"
                     }`}
                   />
                 </div>
@@ -574,11 +495,6 @@ const Sample2Process = () => {
                 <div className="flex-grow">
                   <span className="font-mono text-[9px] uppercase tracking-widest text-[#AE9E8E] mb-2 font-medium flex items-center gap-2">
                     <span>PHASE 0{idx + 1} // {step.phase}</span>
-                    {isCompleted && (
-                      <span className="text-[7px] bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 px-1 py-0.5 rounded-sm tracking-normal font-sans font-medium uppercase shrink-0">
-                        Completed
-                      </span>
-                    )}
                   </span>
                   <h4
                     className={`font-sans text-[#161616] text-base md:text-lg font-light leading-snug transition-all duration-400 ${
