@@ -621,12 +621,16 @@ const CreativeProcess = ({ projectIndex }: { projectIndex?: number }) => {
     isHoveringStepsRef.current = false;
     const container = rightColumnRef.current;
     if (container) {
+      isProgrammaticScrolling.current = true;
       const spacerHeight = container.clientHeight || window.innerHeight;
       setActiveStep(0);
       container.scrollTo({
         top: spacerHeight,
         behavior: "smooth"
       });
+      setTimeout(() => {
+        isProgrammaticScrolling.current = false;
+      }, 800);
     }
   };
 
@@ -668,7 +672,32 @@ const CreativeProcess = ({ projectIndex }: { projectIndex?: number }) => {
   };
 
   const handleRightColumnScroll = () => {
-    // No-op: changing phase is only affected by the cursor's touch/hover, not the scrolling
+    const container = rightColumnRef.current;
+    if (!container) return;
+
+    // Only clamp the scroll bounds when user is actively interacting (not during automatic programmatic/smooth scrolls)
+    if (isHoveringStepsRef.current && !isProgrammaticScrolling.current) {
+      const containerHeight = container.clientHeight;
+      const el0 = document.getElementById("creative-step-0");
+      const el5 = document.getElementById(`creative-step-${creativeSteps.length - 1}`);
+
+      let center0 = 0;
+      let center5 = container.scrollHeight - containerHeight;
+
+      if (el0) {
+        center0 = el0.offsetTop - containerHeight / 2 + el0.clientHeight / 2;
+      }
+      if (el5) {
+        center5 = el5.offsetTop - containerHeight / 2 + el5.clientHeight / 2;
+      }
+
+      // Clamp scroll position to keep creative steps locked between centered Phase 01 and Phase 06
+      if (container.scrollTop < center0) {
+        container.scrollTop = center0;
+      } else if (container.scrollTop > center5) {
+        container.scrollTop = center5;
+      }
+    }
   };
 
   const handleStepClick = (idx: number) => {
@@ -679,8 +708,12 @@ const CreativeProcess = ({ projectIndex }: { projectIndex?: number }) => {
     const container = rightColumnRef.current;
     if (container && window.innerWidth >= 1024) {
       const alignTop = () => {
+        isProgrammaticScrolling.current = true;
         const height = container.clientHeight || window.innerHeight;
         container.scrollTop = height;
+        setTimeout(() => {
+          isProgrammaticScrolling.current = false;
+        }, 150);
       };
       
       alignTop();
@@ -726,31 +759,25 @@ const CreativeProcess = ({ projectIndex }: { projectIndex?: number }) => {
         // Scrolling down
         // Lock scroll and scroll container until Phase 06 is centered
         const remaining = center5 - container.scrollTop;
-        if (remaining > 0.1) {
+        if (remaining > 1) {
           e.preventDefault();
           e.stopPropagation();
           const amount = Math.min(adjustedDelta, remaining);
           container.scrollBy({ top: amount, behavior: "auto" });
         } else {
-          // Phase 06 is centered or passed. Unlock scroll and let the outer page scroll down.
-          e.preventDefault();
-          e.stopPropagation();
-          window.scrollBy({ top: delta, behavior: "auto" });
+          // Phase 06 is centered or passed. Let the browser naturally scroll the outer page down without blocking or custom wheel hacking.
         }
       } else if (delta < 0) {
         // Scrolling up
         // Lock scroll and scroll container until Phase 01 is centered
         const remaining = center0 - container.scrollTop; // negative since scrollTop > center0
-        if (remaining < -0.1) {
+        if (remaining < -1) {
           e.preventDefault();
           e.stopPropagation();
           const amount = Math.max(adjustedDelta, remaining); // both are negative, max gets the one closer to 0
           container.scrollBy({ top: amount, behavior: "auto" });
         } else {
-          // Phase 01 is centered or passed. Unlock scroll and let the outer page scroll up.
-          e.preventDefault();
-          e.stopPropagation();
-          window.scrollBy({ top: delta, behavior: "auto" });
+          // Phase 01 is centered or passed. Let the browser naturally scroll the outer page up without blocking or custom wheel hacking.
         }
       }
     };
@@ -837,6 +864,11 @@ const CreativeProcess = ({ projectIndex }: { projectIndex?: number }) => {
       <div ref={stickyParentRef} className="relative w-full bg-[#FAF9F5] border-b border-[#E5E2DC]">
         {/* Split Columns Side-by-Side with Border line separator - left sticky, right scrolls */}
         <div 
+          onMouseEnter={() => {
+            if (window.innerWidth >= 1024) {
+              isHoveringStepsRef.current = true;
+            }
+          }}
           onMouseLeave={handleMouseLeaveSection}
           className="grid grid-cols-1 lg:grid-cols-2 gap-0 relative w-full lg:aspect-[2/1] overflow-hidden"
         >
@@ -926,12 +958,6 @@ const CreativeProcess = ({ projectIndex }: { projectIndex?: number }) => {
             ref={rightColumnRef}
             onScroll={handleRightColumnScroll}
             className="flex flex-col w-full h-full bg-transparent overflow-y-auto scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden pt-0 pb-0"
-            onMouseEnter={() => {
-              isHoveringStepsRef.current = true;
-            }}
-            onMouseLeave={() => {
-              isHoveringStepsRef.current = false;
-            }}
           >
             {/* Top spacer so the first step can scroll down below the viewport */}
             <div className="hidden lg:block lg:h-full shrink-0" />
