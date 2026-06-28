@@ -461,7 +461,10 @@ export default function App() {
   const [navigationProgress, setNavigationProgress] = useState(0);
   const [fadeWhiteOpacity, setFadeWhiteOpacity] = useState(0);
 
-  const navigateWithTransition = (nextView: { type: "home" } | { type: "project"; index: number } | { type: "about" } | { type: "gallery" }) => {
+  const navigateWithTransition = (
+    nextView: { type: "home" } | { type: "project"; index: number } | { type: "about" } | { type: "gallery" },
+    shouldPushState = true
+  ) => {
     setIsNavigating(true);
     setNavigationProgress(15);
     setFadeWhiteOpacity(1);
@@ -484,24 +487,24 @@ export default function App() {
       _setActiveView(nextView);
       if (typeof window !== "undefined") {
         if (nextView.type === "project") {
-          const path = getPathForIndex(nextView.index);
-          if (window.location.pathname !== path) {
-            window.history.pushState({ type: "project", index: nextView.index }, "", path);
+          if (shouldPushState) {
+            window.history.pushState({ type: "project", index: nextView.index }, "", "/");
           }
           setActiveProject(nextView.index);
         } else if (nextView.type === "about") {
-          if (window.location.pathname !== "/about") {
-            window.history.pushState({ type: "about" }, "", "/about");
+          if (shouldPushState) {
+            window.history.pushState({ type: "about" }, "", "/");
           }
         } else if (nextView.type === "gallery") {
-          if (window.location.pathname !== "/gallery") {
-            window.history.pushState({ type: "gallery" }, "", "/gallery");
+          if (shouldPushState) {
+            window.history.pushState({ type: "gallery" }, "", "/");
           }
         } else {
-          if (window.location.pathname !== "/") {
+          if (shouldPushState) {
             window.history.pushState({ type: "home" }, "", "/");
           }
         }
+        // Scroll to the top behind the white screen so the current view isn't affected before transition
         window.scrollTo(0, 0);
         lenisRef.current?.scrollTo(0, { immediate: true });
       }
@@ -531,23 +534,33 @@ export default function App() {
   };
 
   useEffect(() => {
-    const handlePopState = () => {
-      const path = window.location.pathname.toLowerCase().replace(/\/$/, "");
+    const handlePopState = (e: PopStateEvent) => {
       let nextView: { type: "home" } | { type: "project"; index: number } | { type: "about" } | { type: "gallery" } = { type: "home" };
       
-      if (path.includes("/about-me") || path.includes("/about")) {
-        nextView = { type: "about" };
-      } else if (path.includes("/gallery") || path.includes("/more-work")) {
-        nextView = { type: "gallery" };
+      if (e.state) {
+        const state = e.state;
+        if (state.type === "project") {
+          nextView = { type: "project", index: state.index };
+        } else if (state.type === "about") {
+          nextView = { type: "about" };
+        } else if (state.type === "gallery") {
+          nextView = { type: "gallery" };
+        }
       } else {
-        const index = getIndexForPath(window.location.pathname);
-        if (index !== -1) {
-          nextView = { type: "project", index };
+        // Fallback for initial load paths if popstate occurs without custom state
+        const path = window.location.pathname.toLowerCase().replace(/\/$/, "");
+        if (path.includes("/about-me") || path.includes("/about")) {
+          nextView = { type: "about" };
+        } else if (path.includes("/gallery") || path.includes("/more-work")) {
+          nextView = { type: "gallery" };
         } else {
-          nextView = { type: "home" };
+          const index = getIndexForPath(window.location.pathname);
+          if (index !== -1) {
+            nextView = { type: "project", index };
+          }
         }
       }
-      navigateWithTransition(nextView);
+      navigateWithTransition(nextView, false);
     };
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
@@ -573,6 +586,55 @@ export default function App() {
     return () => {
       window.removeEventListener("resize", checkOrientation);
       window.removeEventListener("orientationchange", checkOrientation);
+    };
+  }, []);
+
+  // GLOBAL CONTENT PROTECTION (No select, copy, drag, or right click)
+  useEffect(() => {
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+    };
+
+    const handleDragStart = (e: DragEvent) => {
+      e.preventDefault();
+    };
+
+    const handleSelectStart = (e: Event) => {
+      e.preventDefault();
+    };
+
+    const handleCopy = (e: ClipboardEvent) => {
+      e.preventDefault();
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (
+        (e.ctrlKey && e.key === "c") ||
+        (e.metaKey && e.key === "c") ||
+        (e.ctrlKey && e.key === "s") ||
+        (e.metaKey && e.key === "s") ||
+        (e.ctrlKey && e.key === "u") ||
+        (e.metaKey && e.key === "u") ||
+        e.key === "F12" ||
+        (e.ctrlKey && e.shiftKey && e.key === "I") ||
+        (e.metaKey && e.altKey && e.key === "i")
+      ) {
+        e.preventDefault();
+      }
+    };
+
+    document.addEventListener("contextmenu", handleContextMenu);
+    document.addEventListener("dragstart", handleDragStart);
+    document.addEventListener("selectstart", handleSelectStart);
+    document.addEventListener("copy", handleCopy);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("contextmenu", handleContextMenu);
+      document.removeEventListener("dragstart", handleDragStart);
+      document.removeEventListener("selectstart", handleSelectStart);
+      document.removeEventListener("copy", handleCopy);
+      document.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
 
@@ -1215,22 +1277,10 @@ export default function App() {
 
                 if (item.id === "home") {
                   setActiveView({ type: "home" });
-                  setTimeout(() => {
-                    window.scrollTo(0, 0);
-                    lenisRef.current?.scrollTo(0, { immediate: true });
-                  }, 100);
                 } else if (item.id === "about") {
                   setActiveView({ type: "about" });
-                  setTimeout(() => {
-                    window.scrollTo(0, 0);
-                    lenisRef.current?.scrollTo(0, { immediate: true });
-                  }, 100);
                 } else if (item.id === "work") {
                   setActiveView({ type: "gallery" });
-                  setTimeout(() => {
-                    window.scrollTo(0, 0);
-                    lenisRef.current?.scrollTo(0, { immediate: true });
-                  }, 100);
                 } else if (item.id === "contact") {
                   isContactUnlockedRef.current = true;
                   setTimeout(() => {
@@ -1325,8 +1375,6 @@ export default function App() {
             onClick={() => {
               if (activeView.type !== "home") {
                 setActiveView({ type: "home" });
-                window.scrollTo(0, 0);
-                lenisRef.current?.scrollTo(0, { immediate: true });
               }
             }}
             className="cursor-pointer group flex flex-col items-center justify-center magnetic-element"
@@ -1502,10 +1550,11 @@ export default function App() {
             loop
             muted
             playsInline
-            className="absolute inset-0 w-full h-full object-cover origin-center pointer-events-none select-none"
+            className="absolute inset-0 w-full h-full object-cover origin-center pointer-events-none select-none tablet-shifted-bg"
             style={{
               transform: `translateY(${scrollY * 0.15}px)`,
-            }}
+              "--translate-y": `${scrollY * 0.15}px`,
+            } as any}
           />
           {/* Subtle vignette/shading layer to finish the artwork integration */}
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#faf9f5]/15 pointer-events-none mix-blend-multiply" />
@@ -1545,16 +1594,8 @@ export default function App() {
                   e.preventDefault();
                   if (item.id === "about") {
                     setActiveView({ type: "about" });
-                    setTimeout(() => {
-                      window.scrollTo(0, 0);
-                      lenisRef.current?.scrollTo(0, { immediate: true });
-                    }, 100);
                   } else if (item.id === "work") {
                     setActiveView({ type: "gallery" });
-                    setTimeout(() => {
-                      window.scrollTo(0, 0);
-                      lenisRef.current?.scrollTo(0, { immediate: true });
-                    }, 100);
                   } else if (item.id === "contact") {
                     isContactUnlockedRef.current = true;
                     setTimeout(() => {
@@ -1717,8 +1758,6 @@ export default function App() {
             <button
               onClick={() => {
                 setActiveView({ type: "about" });
-                window.scrollTo(0, 0);
-                lenisRef.current?.scrollTo(0, { immediate: true });
               }}
               className="group flex items-center justify-start h-12 md:h-14 rounded-full border border-[#161616]/20 hover:border-[#F05C3B] hover:text-[#F05C3B] bg-transparent transition-all duration-500 ease-out cursor-pointer overflow-hidden w-12 hover:w-48 md:w-14 md:hover:w-56"
               aria-label="More about me"
@@ -2153,8 +2192,6 @@ export default function App() {
                   <button
                     onClick={() => {
                       setActiveView({ type: "project", index: activeProject });
-                      window.scrollTo(0, 0);
-                      lenisRef.current?.scrollTo(0, { immediate: true });
                     }}
                     className={`group/btn inline-flex items-center gap-5 px-6 py-2.5 rounded-full border transition-all duration-500 ease-out text-xs md:text-sm tracking-wide font-normal bg-transparent cursor-pointer text-left ${
                       activeProject === 3 ? "text-white border-white/25 hover:border-[#F05C3B] hover:text-[#F05C3B] hover:bg-white/10" : "text-[#161616] border-[#161616]/20 hover:border-[#F05C3B] hover:text-[#F05C3B]"
@@ -2454,8 +2491,6 @@ export default function App() {
                 <button
                   onClick={() => {
                     setActiveView({ type: "project", index: activeProject });
-                    window.scrollTo(0, 0);
-                    lenisRef.current?.scrollTo(0, { immediate: true });
                   }}
                   className="absolute bottom-6 right-6 w-9 h-9 sm:w-11 sm:h-11 rounded-full border border-white/30 hover:border-white/80 bg-white/10 hover:bg-white/25 backdrop-blur-[2px] text-white flex items-center justify-center transition-all duration-300 z-20 shadow-xs hover:scale-105 active:scale-95 cursor-pointer animate-project-fade group/explore"
                   aria-label="Explore Case Studies"
@@ -2689,8 +2724,6 @@ export default function App() {
                       <button
                         onClick={() => {
                           setActiveView({ type: "project", index: idx });
-                          window.scrollTo(0, 0);
-                          lenisRef.current?.scrollTo(0, { immediate: true });
                         }}
                         className="group/btn inline-flex items-center justify-center gap-2.5 px-4 py-2 rounded-full border border-[#161616]/15 bg-[#161616]/5 hover:bg-[#F05C3B] hover:text-white hover:border-[#F05C3B] transition-all duration-300 text-[10px] tracking-wide font-normal text-[#161616] cursor-pointer"
                       >
@@ -2825,8 +2858,6 @@ export default function App() {
               id="more-work-btn"
               onClick={() => {
                 setActiveView({ type: "gallery" });
-                window.scrollTo(0, 0);
-                lenisRef.current?.scrollTo(0, { immediate: true });
               }}
               className="group/btn inline-flex items-center gap-6 px-10 py-4 md:py-5 rounded-full border border-[#161616]/15 hover:border-[#F05C3B] text-xs md:text-sm tracking-[0.25em] uppercase font-bold text-[#161616] hover:text-[#F05C3B] transition-all duration-500 ease-out cursor-pointer bg-[#FAF9F5]/80 hover:bg-[#FAF9F5] hover:shadow-xs relative"
             >
@@ -3153,8 +3184,6 @@ export default function App() {
             scrollY={scrollY}
             onBack={() => {
               setActiveView({ type: "home" });
-              window.scrollTo(0, 0);
-              lenisRef.current?.scrollTo(0, { immediate: true });
             }}
           />
         </Suspense>
@@ -3169,13 +3198,9 @@ export default function App() {
             scrollY={scrollY}
             onBack={() => {
               setActiveView({ type: "home" });
-              window.scrollTo(0, 0);
-              lenisRef.current?.scrollTo(0, { immediate: true });
             }}
             onNavigateToProject={(index) => {
               setActiveView({ type: "project", index });
-              window.scrollTo(0, 0);
-              lenisRef.current?.scrollTo(0, { immediate: true });
             }}
           />
         </Suspense>
@@ -3193,20 +3218,14 @@ export default function App() {
             scrollY={scrollY}
             onBack={() => {
               setActiveView({ type: "home" });
-              window.scrollTo(0, 0);
-              lenisRef.current?.scrollTo(0, { immediate: true });
             }}
             onPrev={() => {
               const prevIdx = activeView.index === 0 ? projectSamples.length - 1 : activeView.index - 1;
               setActiveView({ type: "project", index: prevIdx });
-              window.scrollTo(0, 0);
-              lenisRef.current?.scrollTo(0, { immediate: true });
             }}
             onNext={() => {
               const nextIdx = activeView.index === projectSamples.length - 1 ? 0 : activeView.index + 1;
               setActiveView({ type: "project", index: nextIdx });
-              window.scrollTo(0, 0);
-              lenisRef.current?.scrollTo(0, { immediate: true });
             }}
             getToolIcon={getToolIcon}
           />

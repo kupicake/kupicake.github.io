@@ -105,3 +105,28 @@ html, body {
   filter: brightness(0) saturate(100%) invert(53%) sepia(61%) saturate(3025%) hue-rotate(338deg) brightness(96%) contrast(97%);
 }
 
+/* Disable content selection and dragging */
+*, *::before, *::after {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  user-drag: none;
+}
+
+img, video {
+  -webkit-user-drag: none;
+  user-drag: none;
+  -webkit-touch-callout: none;
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .tablet-shifted-bg {
+    width: 200% !important;
+    left: -50% !important;
+    max-width: none !important;
+    transform: translateX(-25%) translateY(var(--translate-y, 0px)) !important;
+  }
+}
+
