@@ -457,48 +457,97 @@ export default function App() {
     return { type: "home" };
   });
 
+  const [isNavigating, setIsNavigating] = useState(false);
+  const [navigationProgress, setNavigationProgress] = useState(0);
+  const [fadeWhiteOpacity, setFadeWhiteOpacity] = useState(0);
+
+  const navigateWithTransition = (nextView: { type: "home" } | { type: "project"; index: number } | { type: "about" } | { type: "gallery" }) => {
+    setIsNavigating(true);
+    setNavigationProgress(15);
+    setFadeWhiteOpacity(1);
+
+    // Slowly increment progress bar to 95% over the 1.5 second period
+    const interval = setInterval(() => {
+      setNavigationProgress((prev) => {
+        if (prev >= 95) {
+          clearInterval(interval);
+          return prev;
+        }
+        // Increment between 6% and 12% every 100ms for a snappy 1s transition
+        const inc = 6 + Math.random() * 6;
+        return Math.min(95, prev + inc);
+      });
+    }, 100);
+
+    // After 500ms (when fully white), change the actual view behind the white screen
+    setTimeout(() => {
+      _setActiveView(nextView);
+      if (typeof window !== "undefined") {
+        if (nextView.type === "project") {
+          const path = getPathForIndex(nextView.index);
+          if (window.location.pathname !== path) {
+            window.history.pushState({ type: "project", index: nextView.index }, "", path);
+          }
+          setActiveProject(nextView.index);
+        } else if (nextView.type === "about") {
+          if (window.location.pathname !== "/about") {
+            window.history.pushState({ type: "about" }, "", "/about");
+          }
+        } else if (nextView.type === "gallery") {
+          if (window.location.pathname !== "/gallery") {
+            window.history.pushState({ type: "gallery" }, "", "/gallery");
+          }
+        } else {
+          if (window.location.pathname !== "/") {
+            window.history.pushState({ type: "home" }, "", "/");
+          }
+        }
+        window.scrollTo(0, 0);
+        lenisRef.current?.scrollTo(0, { immediate: true });
+      }
+
+      // Keep it white for exactly 1 second (1000ms) after the view changes
+      setTimeout(() => {
+        clearInterval(interval);
+        setNavigationProgress(100);
+
+        // Fade back to normal
+        setTimeout(() => {
+          setFadeWhiteOpacity(0);
+          
+          // Reset navigation states once fully visible
+          setTimeout(() => {
+            setIsNavigating(false);
+            setNavigationProgress(0);
+          }, 400);
+        }, 200);
+      }, 1000);
+    }, 500);
+  };
+
   const setActiveView = (view: { type: "home" } | { type: "project"; index: number } | { type: "about" } | { type: "gallery" } | ((prev: any) => any)) => {
     const nextView = typeof view === "function" ? view(activeView) : view;
-    _setActiveView(nextView);
-    if (typeof window !== "undefined") {
-      if (nextView.type === "project") {
-        const path = getPathForIndex(nextView.index);
-        if (window.location.pathname !== path) {
-          window.history.pushState({ type: "project", index: nextView.index }, "", path);
-        }
-        setActiveProject(nextView.index);
-      } else if (nextView.type === "about") {
-        if (window.location.pathname !== "/about") {
-          window.history.pushState({ type: "about" }, "", "/about");
-        }
-      } else if (nextView.type === "gallery") {
-        if (window.location.pathname !== "/gallery") {
-          window.history.pushState({ type: "gallery" }, "", "/gallery");
-        }
-      } else {
-        if (window.location.pathname !== "/") {
-          window.history.pushState({ type: "home" }, "", "/");
-        }
-      }
-    }
+    navigateWithTransition(nextView);
   };
 
   useEffect(() => {
     const handlePopState = () => {
       const path = window.location.pathname.toLowerCase().replace(/\/$/, "");
+      let nextView: { type: "home" } | { type: "project"; index: number } | { type: "about" } | { type: "gallery" } = { type: "home" };
+      
       if (path.includes("/about-me") || path.includes("/about")) {
-        _setActiveView({ type: "about" });
+        nextView = { type: "about" };
       } else if (path.includes("/gallery") || path.includes("/more-work")) {
-        _setActiveView({ type: "gallery" });
+        nextView = { type: "gallery" };
       } else {
         const index = getIndexForPath(window.location.pathname);
         if (index !== -1) {
-          _setActiveView({ type: "project", index });
-          setActiveProject(index);
+          nextView = { type: "project", index };
         } else {
-          _setActiveView({ type: "home" });
+          nextView = { type: "home" };
         }
       }
+      navigateWithTransition(nextView);
     };
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
@@ -981,6 +1030,18 @@ export default function App() {
     );
   }
 
+  const statementRef = useRef<HTMLDivElement>(null);
+  let statementProgress = 0;
+  if (statementRef.current && windowHeight > 0) {
+    const rect = statementRef.current.getBoundingClientRect();
+    const startY = windowHeight * 0.95;
+    const endY = windowHeight * 0.45;
+    statementProgress = Math.max(
+      0,
+      Math.min(1, (startY - rect.top) / (startY - endY)),
+    );
+  }
+
   const principleWords1 = [
     { w: "Design", h: false },
     { w: "with", h: false },
@@ -1047,6 +1108,26 @@ export default function App() {
 
   return (
     <main className="bg-[#FAF9F5] flex flex-col w-full min-h-screen font-sans relative overflow-x-hidden">
+      {/* PAGE TRANSITION OVERLAY */}
+      <div
+        className="fixed inset-0 bg-white pointer-events-none transition-opacity ease-out z-[9998]"
+        style={{
+          opacity: fadeWhiteOpacity,
+          transitionDuration: fadeWhiteOpacity === 1 ? "500ms" : "400ms",
+        }}
+      />
+
+      {/* SUBTLE BOTTOM PROGRESS BAR */}
+      <div
+        className="fixed bottom-0 left-0 w-full h-[2.5px] bg-transparent z-[9999] pointer-events-none transition-opacity duration-500"
+        style={{ opacity: isNavigating ? 1 : 0 }}
+      >
+        <div
+          className="h-full bg-[#F05C3B] transition-all duration-300 ease-out"
+          style={{ width: `${navigationProgress}%` }}
+        />
+      </div>
+
       {/* LOADING SCREEN */}
       {!isFullyLoaded && (
         <div
@@ -2829,16 +2910,26 @@ export default function App() {
           </div>
 
           {/* Bottom Statement Footer (now swapped to top) */}
-          <div className="flex-1 w-full flex justify-center items-center bg-[#faf9f5] py-12 lg:py-16 px-4 sm:px-6 md:px-12 shrink-0 overflow-hidden">
+          <div ref={statementRef} className="flex-[2] w-full flex justify-center items-center bg-[#faf9f5] py-12 lg:py-16 xl:py-20 px-4 sm:px-6 md:px-12 shrink-0 lg:shrink overflow-hidden">
             <div className="group/statement flex flex-col items-center justify-center w-full max-w-7xl mx-auto cursor-default select-none">
               {/* First line: LET'S + icon + WORK */}
-              <div className="flex flex-row items-center justify-center gap-x-2 sm:gap-x-4 md:gap-x-6 font-sans text-[26px] xs:text-4xl sm:text-6xl md:text-7xl lg:text-[90px] xl:text-[110px] font-normal leading-none tracking-tight text-[#161616] whitespace-nowrap">
+              <div className="flex flex-row items-center justify-center gap-x-2 sm:gap-x-4 md:gap-x-6 font-sans text-[26px] xs:text-4xl sm:text-6xl md:text-7xl lg:text-[100px] xl:text-[120px] font-normal leading-none tracking-tight text-[#161616] whitespace-nowrap">
                 <span className="text-[#b5b5b0]">“</span>
-                <span>LET'S</span>
+                <span
+                  style={{
+                    backgroundImage: `linear-gradient(to right, #161616 ${Math.max(0, Math.min(100, (statementProgress * 3 - 0) * 100))}%, #b5b5b0 ${Math.max(0, Math.min(100, (statementProgress * 3 - 0) * 100))}%)`,
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    backgroundClip: "text",
+                    color: "transparent",
+                  }}
+                >
+                  LET'S
+                </span>
                 
                 {/* Centered kupicake icon */}
                 <span className="inline-flex items-center justify-center shrink-0">
-                  <span className="w-8 h-8 xs:w-11 xs:h-11 sm:w-16 sm:h-16 md:w-22 md:h-22 lg:w-[100px] lg:h-[100px] rounded-full flex items-center justify-center overflow-hidden transition-all duration-500 border border-[#E5E2DC] bg-white group-hover/statement:border-[#F05C3B]/60 shadow-xs group-hover/statement:scale-105">
+                  <span className="w-8 h-8 xs:w-11 xs:h-11 sm:w-16 sm:h-16 md:w-22 md:h-22 lg:w-[110px] lg:h-[110px] rounded-full flex items-center justify-center overflow-hidden transition-all duration-500 border border-[#E5E2DC] bg-white group-hover/statement:border-[#F05C3B]/60 shadow-xs group-hover/statement:scale-105">
                     <img
                       src="https://raw.githubusercontent.com/kupicake/database/HERO-SECTION/LOGO%20KUPICAKE/kupicake%20putih.svg"
                       alt="Kupicake Logo"
@@ -2848,12 +2939,32 @@ export default function App() {
                   </span>
                 </span>
 
-                <span>WORK</span>
+                <span
+                  style={{
+                    backgroundImage: `linear-gradient(to right, #161616 ${Math.max(0, Math.min(100, (statementProgress * 3 - 1) * 100))}%, #b5b5b0 ${Math.max(0, Math.min(100, (statementProgress * 3 - 1) * 100))}%)`,
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    backgroundClip: "text",
+                    color: "transparent",
+                  }}
+                >
+                  WORK
+                </span>
               </div>
 
               {/* Second line: TOGETHER */}
-              <div className="mt-2 sm:mt-4 md:mt-6 font-sans text-[26px] xs:text-4xl sm:text-6xl md:text-7xl lg:text-[90px] xl:text-[110px] font-normal leading-none tracking-tight text-[#161616] whitespace-nowrap flex flex-row items-center justify-center">
-                <span className="text-[#F05C3B]">TOGETHER</span>
+              <div className="mt-2 sm:mt-4 md:mt-6 font-sans text-[26px] xs:text-4xl sm:text-6xl md:text-7xl lg:text-[100px] xl:text-[120px] font-normal leading-none tracking-tight text-[#161616] whitespace-nowrap flex flex-row items-center justify-center">
+                <span
+                  style={{
+                    backgroundImage: `linear-gradient(to right, #F05C3B ${Math.max(0, Math.min(100, (statementProgress * 3 - 2) * 100))}%, #b5b5b0 ${Math.max(0, Math.min(100, (statementProgress * 3 - 2) * 100))}%)`,
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    backgroundClip: "text",
+                    color: "transparent",
+                  }}
+                >
+                  TOGETHER
+                </span>
                 <span className="text-[#b5b5b0] ml-1 sm:ml-2 md:ml-3">”</span>
               </div>
               
@@ -2866,18 +2977,18 @@ export default function App() {
             </div>
           </div>
 
-          <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-[1px] bg-[#E5E2DC] border-t border-b border-[#E5E2DC] shrink-0">
+          <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-[1px] bg-[#E5E2DC] border-t border-b border-[#E5E2DC] shrink-0 lg:shrink lg:flex-1">
             {/* Box 1: Status & Info */}
-            <div className="bg-[#faf9f5] hover:bg-white transition-colors duration-500 p-6 md:p-8 lg:p-10 flex flex-col justify-between">
+            <div className="bg-[#faf9f5] hover:bg-white transition-colors duration-500 p-5 md:p-6 lg:p-8 flex flex-col justify-between">
               <div>
-                <span className="text-[#8a8a85] font-mono text-[10px] md:text-xs uppercase tracking-wider block mb-4">
+                <span className="text-[#8a8a85] font-mono text-[10px] md:text-xs uppercase tracking-wider block mb-3">
                   01 // AVAILABILITY
                 </span>
-                <h3 className="text-[#1a1a1a] font-normal text-2xl md:text-3xl lg:text-[40px] leading-tight mb-6">
+                <h3 className="text-[#1a1a1a] font-normal text-xl md:text-2xl lg:text-[28px] leading-tight mb-4">
                   Open for new projects and remote collaborations.
                 </h3>
               </div>
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 mt-8">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 mt-6">
                 {/* Left: Location & Status */}
                 <div className="flex flex-col gap-1 font-mono text-[10px] md:text-xs text-[#5a5957]">
                   <div className="flex items-center gap-1.5">
@@ -2901,16 +3012,16 @@ export default function App() {
             </div>
 
             {/* Box 2: Actions & Details */}
-            <div className="bg-[#faf9f5] hover:bg-white transition-colors duration-500 p-6 md:p-8 lg:p-10 flex flex-col justify-between group/contact-box relative overflow-hidden">
+            <div className="bg-[#faf9f5] hover:bg-white transition-colors duration-500 p-5 md:p-6 lg:p-8 flex flex-col justify-between group/contact-box relative overflow-hidden">
               <div>
-                <span className="text-[#8a8a85] font-mono text-[10px] md:text-xs uppercase tracking-wider block mb-4">
+                <span className="text-[#8a8a85] font-mono text-[10px] md:text-xs uppercase tracking-wider block mb-3">
                   02 // DIRECT INQUIRY
                 </span>
-                <div className="flex flex-col gap-4">
-                  <div className="group/email flex items-center gap-3 relative min-h-[48px]">
+                <div className="flex flex-col gap-3">
+                  <div className="group/email flex items-center gap-3 relative min-h-[38px]">
                     <a
                       href="mailto:riskirw17@gmail.com"
-                      className="text-[#1a1a1a] hover:text-[#F05C3B] font-normal text-2xl md:text-3xl lg:text-[40px] leading-tight text-left block break-all transition-colors duration-500 font-sans"
+                      className="text-[#1a1a1a] hover:text-[#F05C3B] font-normal text-xl md:text-2xl lg:text-[28px] leading-tight text-left block break-all transition-colors duration-500 font-sans"
                     >
                       riskirw17@gmail.com
                     </a>
@@ -2922,7 +3033,7 @@ export default function App() {
                         setEmailCopied(true);
                         setTimeout(() => setEmailCopied(false), 2000);
                       }}
-                      className="p-2 rounded-full hover:bg-[#F05C3B]/10 text-[#737370] hover:text-[#F05C3B] cursor-pointer opacity-0 group-hover/email:opacity-100 focus:opacity-100 transition-all duration-300 flex items-center justify-center shrink-0 border border-[#E5E2DC]"
+                      className="p-1.5 rounded-full hover:bg-[#F05C3B]/10 text-[#737370] hover:text-[#F05C3B] cursor-pointer opacity-0 group-hover/email:opacity-100 focus:opacity-100 transition-all duration-300 flex items-center justify-center shrink-0 border border-[#E5E2DC]"
                       title="Copy email to clipboard"
                     >
                       {emailCopied ? (
@@ -2935,12 +3046,12 @@ export default function App() {
                     </button>
                   </div>
                   
-                  <div className="group/phone flex items-center gap-3 relative min-h-[36px]">
+                  <div className="group/phone flex items-center gap-3 relative min-h-[30px]">
                     <a
                       href="https://wa.me/6289673731449"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-[#737370] hover:text-[#F05C3B] font-normal text-xl md:text-2xl lg:text-[28px] leading-tight block transition-colors duration-500 font-sans"
+                      className="text-[#737370] hover:text-[#F05C3B] font-normal text-lg md:text-xl lg:text-[22px] leading-tight block transition-colors duration-500 font-sans"
                     >
                       +62 896 7373 1449
                     </a>
@@ -3018,6 +3129,12 @@ export default function App() {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Bottom Credit Footer inside Get In Touch */}
+          <div className="w-full py-4 px-6 md:px-12 lg:px-16 bg-[#faf9f5] flex justify-between items-center shrink-0 font-mono text-[9px] tracking-wider uppercase text-[#737370] transition-colors duration-500">
+            <span>© {new Date().getFullYear()} KUPI CAKE</span>
+            <span>ALL RIGHTS RESERVED</span>
           </div>
         </div>
 
