@@ -788,6 +788,14 @@ const CreativeProcess = ({ projectIndex }: { projectIndex?: number }) => {
     };
   }, []);
 
+
+  const currentPipelineWords = (() => {
+    if (projectIndex === 0) return [];
+    if (projectIndex === 1) return pipelineWordsSample2;
+    if (projectIndex === 2) return pipelineWordsStoryboard;
+    return pipelineWords;
+  })();
+
   const windowHeight = typeof window !== "undefined" ? window.innerHeight : 0;
   let pipelineHeadingProgress = 0;
   let pipelineTextProgress = 0;
@@ -834,10 +842,10 @@ const CreativeProcess = ({ projectIndex }: { projectIndex?: number }) => {
           ref={pipelineTextRef}
           className="text-xl md:text-3xl lg:text-[38px] xl:text-[40px] font-normal leading-[1.1] md:leading-[1.15] tracking-tight text-[#161616]/40 select-text w-full"
         >
-          {pipelineWords.map((word, i) => {
+          {currentPipelineWords.map((word, i) => {
             const fillPercentage = Math.max(
               0,
-              Math.min(100, (pipelineTextProgress * pipelineWords.length - i) * 100),
+              Math.min(100, (pipelineTextProgress * currentPipelineWords.length - i) * 100),
             );
             const targetColor = word.h ? "#F05C3B" : "#333333";
             return (
@@ -853,7 +861,7 @@ const CreativeProcess = ({ projectIndex }: { projectIndex?: number }) => {
                 >
                   {word.w}
                 </span>
-                {i < pipelineWords.length - 1 && " "}
+                {i < currentPipelineWords.length - 1 && " "}
               </span>
             );
           })}
@@ -1078,13 +1086,13 @@ const conceptWordsProcrastination = [
 ];
 
 const conceptWordsSweetheart = [
-  { w: "The", h: false },
-  { w: "story", h: false },
+  { w: "The", h: true },
+  { w: "Story", h: true },
   { w: "follows", h: false },
   { w: "Avi", h: false },
   { w: "Sina,", h: false },
   { w: "an", h: false },
-  { w: "awkward", h: true },
+  { w: "awkward", h: false },
   { w: "high", h: false },
   { w: "school", h: false },
   { w: "girl", h: false },
@@ -1184,7 +1192,7 @@ const conceptWordsDeadliner = [
   { w: "a", h: false },
   { w: "classic", h: false },
   { w: "2D", h: false },
-  { w: "platformer", h: true },
+  { w: "platformer", h: false },
   { w: "following", h: false },
   { w: "the", h: false },
   { w: "chaotic", h: false },
@@ -1218,7 +1226,7 @@ const contributionWordsDeadliner = [
   { w: "I", h: false },
   { w: "collaborated", h: false },
   { w: "on", h: false },
-  { w: "designing", h: false },
+  { w: "designing", h: "orange" },
   { w: "the", h: false },
   { w: "main", h: false },
   { w: "character,", h: false },
@@ -1240,7 +1248,7 @@ const contributionWordsDeadliner = [
   { w: "character", h: false },
   { w: "art,", h: false },
   { w: "I", h: false },
-  { w: "developed", h: false },
+  { w: "developed", h: "orange" },
   { w: "a", h: false },
   { w: "modular", h: false },
   { w: "system", h: false },
